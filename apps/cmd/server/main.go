@@ -11,15 +11,20 @@ import (
 func main() {
 	cfg := config.Load()
 
-	// Run migration
+	// bootstrap database
+	database.EnsureDatabaseExists(cfg.DBUrl)
 	database.RunMigration(cfg.DBUrl)
 
-	// Init DB
-	_ = database.NewEntClient(cfg.DBUrl)
+	// init ent
+	entClient := database.NewEntClient(cfg.DBUrl)
+	defer entClient.Close()
 
+	// init fiber
 	app := fiber.New()
 
-	route.Register(app)
+	// inject dependencies
+	route.Register(app, entClient)
 
 	app.Listen(":" + cfg.Port)
 }
+
