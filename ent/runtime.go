@@ -6,6 +6,8 @@ import (
 	"go-boilerplate/ent/schema"
 	"go-boilerplate/ent/user"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -22,4 +24,8 @@ func init() {
 	userDescUpdatedAt := userFields[5].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(time.Time)
+	// userDescID is the schema descriptor for id field.
+	userDescID := userFields[0].Descriptor()
+	// user.DefaultID holds the default value on creation for the id field.
+	user.DefaultID = userDescID.Default.(func() uuid.UUID)
 }

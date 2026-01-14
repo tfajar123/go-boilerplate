@@ -73,6 +73,14 @@ func (_c *UserCreate) SetID(v uuid.UUID) *UserCreate {
 	return _c
 }
 
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
+	if v != nil {
+		_c.SetID(*v)
+	}
+	return _c
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -115,6 +123,10 @@ func (_c *UserCreate) defaults() {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := user.DefaultUpdatedAt
 		_c.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := user.DefaultID()
+		_c.mutation.SetID(v)
 	}
 }
 

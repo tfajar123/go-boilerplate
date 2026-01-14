@@ -15,6 +15,6 @@ func Register(app *fiber.App, client *ent.Client) {
 
 	api := app.Group("/api/v1")
 
-	registerAuthRoutes(api)
+	registerAuthRoutes(api, client)
 
 }
