@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("SUPER_SECRET_KEY") // pindahkan ke ENV nanti
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type JWTClaims struct {
 	UserID string `json:"user_id"`

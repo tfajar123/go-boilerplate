@@ -20,6 +20,7 @@ func (User) Fields() []ent.Field {
 		field.String("name"),
 		field.String("email").Unique(),
 		field.String("password"),
+		field.Enum("role").Values("admin", "user").Default("user"),
 		field.Time("created_at").Default(time.Now()),
 		field.Time("updated_at").Default(time.Now()),
 	}

@@ -3,6 +3,7 @@ package authController
 import (
 	authService "go-boilerplate/apps/internal/features/auth/services"
 	"go-boilerplate/apps/internal/utils"
+	"go-boilerplate/ent/user"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,6 +25,7 @@ type RegisterRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 func (h *AuthController) Login(c *fiber.Ctx) error {
@@ -55,7 +57,12 @@ func (h *AuthController) Login(c *fiber.Ctx) error {
 		return nil
 	}
 
-	return utils.Ok(c, "login berhasil", map[string]string{"token": token})
+	return utils.Ok(c, "login berhasil", map[string]any{"user": map[string]any{
+		"id":    user.ID.String(),
+		"name":  user.Name,
+		"email": user.Email,
+		"role":  user.Role,
+	}, "token": token})
 }
 
 func (h *AuthController) Register(c *fiber.Ctx) error {
@@ -70,6 +77,7 @@ func (h *AuthController) Register(c *fiber.Ctx) error {
 		req.Name,
 		req.Email,
 		req.Password,
+		user.Role(req.Role),
 	); err != nil {
 		return utils.BadRequest(c, err.Error())
 	}

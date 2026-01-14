@@ -43,12 +43,12 @@ func (s *AuthService) Login(
 	return u, nil
 }
 
-
 func (s *AuthService) Register(
 	ctx context.Context,
 	name string,
 	email string,
 	password string,
+	role user.Role,
 ) error {
 
 	exists, err := s.client.User.
@@ -77,6 +77,7 @@ func (s *AuthService) Register(
 		SetName(name).
 		SetEmail(email).
 		SetPassword(string(hashedPassword)).
+		SetRole(role).
 		Save(ctx)
 
 	return err
