@@ -3,38 +3,80 @@ package middlewares
 import (
 	"strings"
 
+	"go-boilerplate/apps/internal/database"
 	"go-boilerplate/apps/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 )
 
-func AuthRequired() fiber.Handler {
+func AuthRequired(redis *redis.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
-
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "authorization header tidak ada",
-			})
+			return utils.Unauthorized(c, "authorization header tidak ada")
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "format token tidak valid",
-			})
+			return utils.Unauthorized(c, "format token tidak valid")
 		}
 
-		claims, err := utils.ParseToken(parts[1])
+		claims, err := utils.ParseAccessToken(parts[1])
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "token tidak valid",
+			return utils.Unauthorized(c, err.Error())
+		}
+
+		userID := claims["sub"].(string)
+		sessionID := claims["sid"].(string)
+
+		// ============================
+		// CEK SESSION KE REDIS (WAJIB)
+		// ============================
+		key := "auth:session:" + userID
+		storedSID, err := redis.Get(c.Context(), key).Result()
+		if err != nil || storedSID != sessionID {
+			return utils.Unauthorized(c, "session sudah logout")
+		}
+
+		c.Locals("user_id", userID)
+		c.Locals("email", claims["email"].(string))
+		c.Locals("session_id", sessionID)
+
+		return c.Next()
+	}
+}
+
+func SessionAuth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		auth := c.Get("Authorization")
+
+		if auth == "" {
+			return c.Status(401).JSON(fiber.Map{
+				"message": "authorization header missing",
 			})
 		}
 
-		// simpan ke context
-		c.Locals("userId", claims.UserID)
-		c.Locals("email", claims.Email)
+		parts := strings.Split(auth, " ")
+		if len(parts) != 2 {
+			return c.Status(401).JSON(fiber.Map{
+				"message": "invalid token",
+			})
+		}
+
+		session, err := utils.GetSession(
+			c.Context(),
+			database.Redis,
+			parts[1],
+		)
+		if err != nil {
+			return c.Status(401).JSON(fiber.Map{
+				"message": "session expired",
+			})
+		}
+
+		c.Locals("user_id", session.UserID)
+		c.Locals("email", session.Email)
 
 		return c.Next()
 	}
