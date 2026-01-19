@@ -1,6 +1,7 @@
 package route
 
 import (
+	"go-boilerplate/apps/internal/database"
 	middlewares "go-boilerplate/apps/internal/middleware"
 	"go-boilerplate/ent"
 
@@ -8,12 +9,14 @@ import (
 )
 
 func registerExRoutes(api fiber.Router, client *ent.Client) {
-	protected := api.Group("/user", middlewares.AuthRequired())
+	redisClient := database.Redis
+	protected := api.Group("/user", middlewares.AuthRequired(redisClient))
 
 	protected.Get("/profile", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"user_id": c.Locals("user_id"),
-			"email":   c.Locals("email"),
+			"user_id":    c.Locals("user_id"),
+			"email":      c.Locals("email"),
+			"session_id": c.Locals("session_id"),
 		})
 	})
 }
