@@ -16,9 +16,9 @@ func RateLimiter(limit int, window time.Duration) fiber.Handler {
 		count, err := database.Redis.Incr(c.Context(), key).Result()
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{
-				"code":    500,
+				"status":  500,
 				"error":   err.Error(),
-				"message": "redis error",
+				"message": "Redis error",
 			})
 		}
 
@@ -28,9 +28,9 @@ func RateLimiter(limit int, window time.Duration) fiber.Handler {
 
 		if count > int64(limit) {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-				"code":    429,
-				"error":   "too many requests",
-				"message": "terlalu banyak request, coba lagi nanti",
+				"status":  429,
+				"error":   "Too many requests",
+				"message": "Terlalu banyak request, coba lagi nanti",
 			})
 		}
 
