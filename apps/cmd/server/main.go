@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"go-boilerplate/apps/internal/config"
 	"go-boilerplate/apps/internal/database"
 	middlewares "go-boilerplate/apps/internal/middleware"
@@ -33,6 +34,9 @@ func main() {
 		zap.String("host", cfg.Redis.Host),
 		zap.Int("db", cfg.Redis.DB),
 	)
+
+	minioClient := database.NewMinioClient(cfg.Minio)
+	database.EnsureBucket(context.Background(), minioClient, cfg.Minio.Bucket)
 
 	// init fiber
 	app := fiber.New()

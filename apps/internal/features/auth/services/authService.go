@@ -67,7 +67,12 @@ func (s *AuthService) Login(
 	accessToken, _ := utils.GenerateAccessToken(u.ID.String(), u.Email, sid)
 	refreshToken, _ := utils.GenerateRefreshToken(u.ID.String(), u.Email, sid)
 
-	return u, accessToken, refreshToken, nil
+	return &ent.User{
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
+		Role:  u.Role,
+	}, accessToken, refreshToken, nil
 }
 
 func (s *AuthService) Register(

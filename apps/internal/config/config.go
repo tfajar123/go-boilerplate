@@ -17,38 +17,68 @@ type RedisConfig struct {
 	TLS      bool
 }
 
+type MinioConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+	Bucket    string
+	UseSSL    bool
+}
+
 type Config struct {
 	AppEnv string
 	DBUrl  string
 	Port   string
 	Redis  RedisConfig
+	Minio  MinioConfig
 }
 
 func Load() *Config {
 	_ = godotenv.Load()
-	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
-	db, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
+
+	redisPort, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
+	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
 
 	cfg := &Config{
 		AppEnv: os.Getenv("APP_ENV"),
 		DBUrl:  os.Getenv("DATABASE_URL"),
 		Port:   os.Getenv("APP_PORT"),
+
 		Redis: RedisConfig{
 			Host:     os.Getenv("REDIS_HOST"),
-			Port:     port,
-			DB:       db,
+			Port:     redisPort,
+			DB:       redisDB,
 			Username: os.Getenv("REDIS_USERNAME"),
 			Password: os.Getenv("REDIS_PASSWORD"),
 			TLS:      os.Getenv("REDIS_TLS") == "true",
 		},
+
+		Minio: MinioConfig{
+			Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+			AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
+			SecretKey: os.Getenv("MINIO_SECRET_KEY"),
+			Bucket:    os.Getenv("MINIO_BUCKET"),
+			UseSSL:    os.Getenv("MINIO_USE_SSL") == "true",
+		},
 	}
 
+	// =====================
+	// Validation
+	// =====================
 	if cfg.DBUrl == "" {
 		log.Fatal("DATABASE_URL is required")
 	}
 
 	if cfg.Port == "" {
 		cfg.Port = "3000"
+	}
+
+	if cfg.Minio.Endpoint == "" {
+		log.Fatal("MINIO_ENDPOINT is required")
+	}
+
+	if cfg.Minio.Bucket == "" {
+		log.Fatal("MINIO_BUCKET is required")
 	}
 
 	return cfg
