@@ -92,13 +92,14 @@ func validateFile(
 			".png":  true,
 			".jpg":  true,
 			".jpeg": true,
+			".webp": true,
 		}
 
 		if !allowed[ext] {
-			return errors.New("hanya file png, jpg, jpeg yang diizinkan")
+			return errors.New("hanya file png, jpg, jpeg, webp yang diizinkan")
 		}
 
-		if file.Size > 5<<20 { // 5MB
+		if file.Size > 3<<20 {
 			return errors.New("ukuran gambar maksimal 5MB")
 		}
 
@@ -107,7 +108,7 @@ func validateFile(
 			return errors.New("hanya file PDF yang diizinkan")
 		}
 
-		if file.Size > 10<<20 { // 10MB
+		if file.Size > 5<<20 {
 			return errors.New("ukuran PDF maksimal 10MB")
 		}
 

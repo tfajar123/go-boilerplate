@@ -9,7 +9,7 @@
 
 # # Golang Fiber Boilerplate
 
-This project using Go Fiber, Ent ORM, Postgres, Air, and golang-migrate for development, so make sure to install it first. This boilerplate also have auth service and controller for fast development.
+This project using Go Fiber, Ent ORM, Postgres, Air, and atlasgo for development, so make sure to install it first. This boilerplate also have auth service and controller for fast development.
 
 ## Installation
 
@@ -18,35 +18,28 @@ Make sure you have golang installed in your machine and set the environment base
 ```bash
 git clone https://github.com/tfajar123/go-boilerplate.git
 cd go-boilerplate
+go mod download
 go mod tidy
 cp .env.example .env
-go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+curl -sSf https://atlasgo.sh | sh //skip this if you already have installed atlas
 go install github.com/air-verse/air@latest
 ```
 
 ## Usage
 
-To run this app, you only have to run `air` in the command prompt or terminal. If you want to make a migration, we recommend that you use `make` for easy development, you can take a look `makefile` for the config. Thus you can run this prompt for migration :
+To run this app, you only have to run `air` in the command prompt or terminal. If you want to make a migration, you must install `atlas` first, so we recommend you to use linux environment to run this app. Thus you can run this prompt for migration :
 
 ```bash
-# making new migrations
-make migrate-create
+set -a
+source .env
+set +a
 
-# migrate to database
-make migrate-up
-
-# rollback migrations by 1 version
-make migrate-down
-
-# view latest migration version
-make migrate-version
-
-# force migration version
-make migrate-force {{version}}
-
-# migration reset
-make migrate-reset
+go generate ./ent
+atlas migrate diff init --env local
+atlas migrate apply --env local
 ```
+
+You can change env based on atlas.hcl, for example `--env staging` if you want apply migration to staging, just make sure.
 
 ## Contributing
 
