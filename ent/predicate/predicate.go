@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Comments is the predicate function for comments builders.
+type Comments func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
