@@ -27,7 +27,7 @@ go install github.com/air-verse/air@latest
 
 ## Usage
 
-To run this app, you only have to run `air` in the command prompt or terminal. If you want to make a migration, you must install `atlas` first, so we recommend you to use linux environment to run this app. Thus you can run this prompt for migration :
+To run this app, you only have to run `air` in the command prompt or terminal. If you want to make a migration, you must install `atlas` first, so we recommend you to use linux environment to run this app. This boilerplate use schema first for migration, so you must put your schema at `./ent/schema/yourschema.go` Thus you can run this prompt for migration :
 
 ```bash
 set -a
@@ -39,7 +39,7 @@ atlas migrate diff init --env local
 atlas migrate apply --env local
 ```
 
-You can change env based on atlas.hcl, for example `--env staging` if you want apply migration to staging, just make sure.
+You can change env based on atlas.hcl, for example `--env staging` if you want apply migration to staging, just make sure to set it up on `atlas.hcl` file.
 
 ## Contributing
 

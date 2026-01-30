@@ -8,6 +8,18 @@ import (
 	"go-boilerplate/ent"
 )
 
+// The CommentsFunc type is an adapter to allow the use of ordinary
+// function as Comments mutator.
+type CommentsFunc func(context.Context, *ent.CommentsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CommentsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommentsMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
