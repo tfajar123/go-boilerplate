@@ -3,9 +3,11 @@ package authService
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go-boilerplate/apps/internal/database"
+	authValidation "go-boilerplate/apps/internal/features/auth/validation"
 	"go-boilerplate/apps/internal/utils"
 	"go-boilerplate/ent"
 	"go-boilerplate/ent/user"
@@ -30,9 +32,16 @@ const (
 	loginTTL        = 15 * time.Minute
 )
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (*ent.User, string, string, error) {
+func (s *AuthService) Login(
+	ctx context.Context,
+	req authValidation.LoginRequest,
+) (*ent.User, string, string, error) {
 
-	failKey := "auth:login_fail:" + email
+	if err := authValidation.ValidateAuth(req); err != nil {
+		return nil, "", "", err
+	}
+
+	failKey := "auth:login_fail:" + req.Email
 
 	failCount, _ := s.redis.Get(ctx, failKey).Int()
 	if failCount >= maxLoginAttempt {
@@ -41,7 +50,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*ent.U
 
 	u, err := s.client.User.
 		Query().
-		Where(user.EmailEQ(email)).
+		Where(user.EmailEQ(req.Email)).
 		Only(ctx)
 
 	if err != nil {
@@ -49,12 +58,11 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*ent.U
 		return nil, "", "", errors.New("email atau password salah")
 	}
 
-	if !utils.VerifyPassword(password, u.Password) {
+	if !utils.VerifyPassword(u.Password, req.Password) {
 		s.incrLoginFail(ctx, failKey)
 		return nil, "", "", errors.New("email atau password salah")
 	}
 
-	// reset counter
 	s.redis.Del(ctx, failKey)
 
 	sid := utils.NewSessionID()
@@ -63,6 +71,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*ent.U
 	if err != nil {
 		return nil, "", "", err
 	}
+	u.Password = ""
 
 	accessToken, _ := utils.GenerateAccessToken(u.ID.String(), u.Email, sid)
 	refreshToken, _ := utils.GenerateRefreshToken(u.ID.String(), u.Email, sid)
@@ -72,15 +81,16 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*ent.U
 
 func (s *AuthService) Register(
 	ctx context.Context,
-	name string,
-	email string,
-	password string,
-	role user.Role,
+	req authValidation.RegisterRequest,
 ) error {
+
+	if err := authValidation.ValidateAuth(req); err != nil {
+		return fmt.Errorf("validation: %w", err)
+	}
 
 	exists, err := s.client.User.
 		Query().
-		Where(user.EmailEQ(email)).
+		Where(user.EmailEQ(req.Email)).
 		Exist(ctx)
 
 	if err != nil {
@@ -91,17 +101,17 @@ func (s *AuthService) Register(
 		return errors.New("email sudah terdaftar")
 	}
 
-	hashedPassword, err := utils.HashPassword(password)
+	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return err
 	}
 
 	_, err = s.client.User.
 		Create().
-		SetName(name).
-		SetEmail(email).
+		SetName(req.Name).
+		SetEmail(req.Email).
 		SetPassword(string(hashedPassword)).
-		SetRole(role).
+		SetRole(req.Role).
 		Save(ctx)
 
 	return err

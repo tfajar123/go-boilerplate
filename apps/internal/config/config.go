@@ -56,6 +56,7 @@ func Load() *Config {
 
 		Storage: StorageConfig{
 			Endpoint:  os.Getenv("STORAGE_ENDPOINT"),
+			Region:    os.Getenv("STORAGE_REGION"),
 			AccessKey: os.Getenv("STORAGE_ACCESS_KEY"),
 			SecretKey: os.Getenv("STORAGE_SECRET_KEY"),
 			Bucket:    os.Getenv("STORAGE_BUCKET"),

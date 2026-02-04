@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -39,12 +40,24 @@ func HashPassword(password string) (string, error) {
 	return fmt.Sprintf("%s.%s", b64Salt, b64Hash), nil
 }
 
-func VerifyPassword(password, encoded string) bool {
-	var saltB64, hashB64 string
-	fmt.Sscanf(encoded, "%s.%s", &saltB64, &hashB64)
+func VerifyPassword(hashEncoded, password string) bool {
+	parts := strings.Split(hashEncoded, ".")
+	if len(parts) != 2 {
+		return false
+	}
 
-	salt, _ := base64.RawStdEncoding.DecodeString(saltB64)
-	expectedHash, _ := base64.RawStdEncoding.DecodeString(hashB64)
+	saltB64 := parts[0]
+	hashB64 := parts[1]
+
+	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
+	if err != nil {
+		return false
+	}
+
+	expectedHash, err := base64.RawStdEncoding.DecodeString(hashB64)
+	if err != nil {
+		return false
+	}
 
 	hash := argon2.IDKey(
 		[]byte(password),

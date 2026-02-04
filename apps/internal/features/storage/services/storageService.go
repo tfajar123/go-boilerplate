@@ -65,19 +65,31 @@ func validateFile(
 ) error {
 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
+	contentType := file.Header.Get("Content-Type")
 
 	switch fileType {
 
 	case FileImage:
-		allowed := map[string]bool{
+
+		allowedExt := map[string]bool{
 			".png":  true,
 			".jpg":  true,
 			".jpeg": true,
 			".webp": true,
 		}
 
-		if !allowed[ext] {
+		allowedMime := map[string]bool{
+			"image/png":  true,
+			"image/jpeg": true,
+			"image/webp": true,
+		}
+
+		if !allowedExt[ext] {
 			return errors.New("hanya file png, jpg, jpeg, webp yang diizinkan")
+		}
+
+		if !allowedMime[contentType] {
+			return errors.New("content-type gambar tidak valid")
 		}
 
 		if file.Size > 5<<20 { // 5MB
@@ -85,8 +97,13 @@ func validateFile(
 		}
 
 	case FilePDF:
+
 		if ext != ".pdf" {
 			return errors.New("hanya file PDF yang diizinkan")
+		}
+
+		if contentType != "application/pdf" {
+			return errors.New("content-type harus application/pdf")
 		}
 
 		if file.Size > 10<<20 { // 10MB
