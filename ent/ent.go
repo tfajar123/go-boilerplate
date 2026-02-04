@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-boilerplate/ent/comments"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"reflect"
 	"sync"
@@ -74,7 +74,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			comments.Table: comments.ValidColumn,
+			profiles.Table: profiles.ValidColumn,
 			user.Table:     user.ValidColumn,
 		})
 	})

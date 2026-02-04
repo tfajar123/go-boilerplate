@@ -22,7 +22,6 @@ func main() {
 
 	// bootstrap database
 	database.EnsureDatabaseExists(cfg.DBUrl)
-	database.RunMigration(cfg.DBUrl)
 
 	// init ent
 	entClient := database.NewEntClient(cfg.DBUrl)

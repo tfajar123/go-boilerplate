@@ -376,21 +376,21 @@ func UpdatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// HasComments applies the HasEdge predicate on the "comments" edge.
-func HasComments() predicate.User {
+// HasProfiles applies the HasEdge predicate on the "profiles" edge.
+func HasProfiles() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, CommentsTable, CommentsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ProfilesTable, ProfilesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasCommentsWith applies the HasEdge predicate on the "comments" edge with a given conditions (other predicates).
-func HasCommentsWith(preds ...predicate.Comments) predicate.User {
+// HasProfilesWith applies the HasEdge predicate on the "profiles" edge with a given conditions (other predicates).
+func HasProfilesWith(preds ...predicate.Profiles) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newCommentsStep()
+		step := newProfilesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

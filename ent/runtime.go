@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"go-boilerplate/ent/comments"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/schema"
 	"go-boilerplate/ent/user"
 	"time"
@@ -15,20 +15,20 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	commentsFields := schema.Comments{}.Fields()
-	_ = commentsFields
-	// commentsDescCreatedAt is the schema descriptor for created_at field.
-	commentsDescCreatedAt := commentsFields[2].Descriptor()
-	// comments.DefaultCreatedAt holds the default value on creation for the created_at field.
-	comments.DefaultCreatedAt = commentsDescCreatedAt.Default.(time.Time)
-	// commentsDescUpdatedAt is the schema descriptor for updated_at field.
-	commentsDescUpdatedAt := commentsFields[3].Descriptor()
-	// comments.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	comments.DefaultUpdatedAt = commentsDescUpdatedAt.Default.(time.Time)
-	// commentsDescID is the schema descriptor for id field.
-	commentsDescID := commentsFields[0].Descriptor()
-	// comments.DefaultID holds the default value on creation for the id field.
-	comments.DefaultID = commentsDescID.Default.(func() uuid.UUID)
+	profilesFields := schema.Profiles{}.Fields()
+	_ = profilesFields
+	// profilesDescCreatedAt is the schema descriptor for created_at field.
+	profilesDescCreatedAt := profilesFields[5].Descriptor()
+	// profiles.DefaultCreatedAt holds the default value on creation for the created_at field.
+	profiles.DefaultCreatedAt = profilesDescCreatedAt.Default.(time.Time)
+	// profilesDescUpdatedAt is the schema descriptor for updated_at field.
+	profilesDescUpdatedAt := profilesFields[6].Descriptor()
+	// profiles.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	profiles.DefaultUpdatedAt = profilesDescUpdatedAt.Default.(time.Time)
+	// profilesDescID is the schema descriptor for id field.
+	profilesDescID := profilesFields[0].Descriptor()
+	// profiles.DefaultID holds the default value on creation for the id field.
+	profiles.DefaultID = profilesDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescCreatedAt is the schema descriptor for created_at field.

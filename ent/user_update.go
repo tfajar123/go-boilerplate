@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-boilerplate/ent/comments"
 	"go-boilerplate/ent/predicate"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"time"
 
@@ -114,19 +114,19 @@ func (_u *UserUpdate) SetNillableUpdatedAt(v *time.Time) *UserUpdate {
 	return _u
 }
 
-// AddCommentIDs adds the "comments" edge to the Comments entity by IDs.
-func (_u *UserUpdate) AddCommentIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.AddCommentIDs(ids...)
+// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
+func (_u *UserUpdate) AddProfileIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddProfileIDs(ids...)
 	return _u
 }
 
-// AddComments adds the "comments" edges to the Comments entity.
-func (_u *UserUpdate) AddComments(v ...*Comments) *UserUpdate {
+// AddProfiles adds the "profiles" edges to the Profiles entity.
+func (_u *UserUpdate) AddProfiles(v ...*Profiles) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddCommentIDs(ids...)
+	return _u.AddProfileIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -134,25 +134,25 @@ func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
 }
 
-// ClearComments clears all "comments" edges to the Comments entity.
-func (_u *UserUpdate) ClearComments() *UserUpdate {
-	_u.mutation.ClearComments()
+// ClearProfiles clears all "profiles" edges to the Profiles entity.
+func (_u *UserUpdate) ClearProfiles() *UserUpdate {
+	_u.mutation.ClearProfiles()
 	return _u
 }
 
-// RemoveCommentIDs removes the "comments" edge to Comments entities by IDs.
-func (_u *UserUpdate) RemoveCommentIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.RemoveCommentIDs(ids...)
+// RemoveProfileIDs removes the "profiles" edge to Profiles entities by IDs.
+func (_u *UserUpdate) RemoveProfileIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveProfileIDs(ids...)
 	return _u
 }
 
-// RemoveComments removes "comments" edges to Comments entities.
-func (_u *UserUpdate) RemoveComments(v ...*Comments) *UserUpdate {
+// RemoveProfiles removes "profiles" edges to Profiles entities.
+func (_u *UserUpdate) RemoveProfiles(v ...*Profiles) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveCommentIDs(ids...)
+	return _u.RemoveProfileIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -222,28 +222,28 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.CommentsCleared() {
+	if _u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !_u.mutation.CommentsCleared() {
+	if nodes := _u.mutation.RemovedProfilesIDs(); len(nodes) > 0 && !_u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -251,15 +251,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -371,19 +371,19 @@ func (_u *UserUpdateOne) SetNillableUpdatedAt(v *time.Time) *UserUpdateOne {
 	return _u
 }
 
-// AddCommentIDs adds the "comments" edge to the Comments entity by IDs.
-func (_u *UserUpdateOne) AddCommentIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.AddCommentIDs(ids...)
+// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
+func (_u *UserUpdateOne) AddProfileIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddProfileIDs(ids...)
 	return _u
 }
 
-// AddComments adds the "comments" edges to the Comments entity.
-func (_u *UserUpdateOne) AddComments(v ...*Comments) *UserUpdateOne {
+// AddProfiles adds the "profiles" edges to the Profiles entity.
+func (_u *UserUpdateOne) AddProfiles(v ...*Profiles) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddCommentIDs(ids...)
+	return _u.AddProfileIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -391,25 +391,25 @@ func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
 }
 
-// ClearComments clears all "comments" edges to the Comments entity.
-func (_u *UserUpdateOne) ClearComments() *UserUpdateOne {
-	_u.mutation.ClearComments()
+// ClearProfiles clears all "profiles" edges to the Profiles entity.
+func (_u *UserUpdateOne) ClearProfiles() *UserUpdateOne {
+	_u.mutation.ClearProfiles()
 	return _u
 }
 
-// RemoveCommentIDs removes the "comments" edge to Comments entities by IDs.
-func (_u *UserUpdateOne) RemoveCommentIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.RemoveCommentIDs(ids...)
+// RemoveProfileIDs removes the "profiles" edge to Profiles entities by IDs.
+func (_u *UserUpdateOne) RemoveProfileIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveProfileIDs(ids...)
 	return _u
 }
 
-// RemoveComments removes "comments" edges to Comments entities.
-func (_u *UserUpdateOne) RemoveComments(v ...*Comments) *UserUpdateOne {
+// RemoveProfiles removes "profiles" edges to Profiles entities.
+func (_u *UserUpdateOne) RemoveProfiles(v ...*Profiles) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveCommentIDs(ids...)
+	return _u.RemoveProfileIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -509,28 +509,28 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.CommentsCleared() {
+	if _u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !_u.mutation.CommentsCleared() {
+	if nodes := _u.mutation.RemovedProfilesIDs(); len(nodes) > 0 && !_u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -538,15 +538,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

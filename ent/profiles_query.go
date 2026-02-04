@@ -5,8 +5,8 @@ package ent
 import (
 	"context"
 	"fmt"
-	"go-boilerplate/ent/comments"
 	"go-boilerplate/ent/predicate"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"math"
 
@@ -17,13 +17,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// CommentsQuery is the builder for querying Comments entities.
-type CommentsQuery struct {
+// ProfilesQuery is the builder for querying Profiles entities.
+type ProfilesQuery struct {
 	config
 	ctx        *QueryContext
-	order      []comments.OrderOption
+	order      []profiles.OrderOption
 	inters     []Interceptor
-	predicates []predicate.Comments
+	predicates []predicate.Profiles
 	withUser   *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
@@ -31,39 +31,39 @@ type CommentsQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the CommentsQuery builder.
-func (_q *CommentsQuery) Where(ps ...predicate.Comments) *CommentsQuery {
+// Where adds a new predicate for the ProfilesQuery builder.
+func (_q *ProfilesQuery) Where(ps ...predicate.Profiles) *ProfilesQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *CommentsQuery) Limit(limit int) *CommentsQuery {
+func (_q *ProfilesQuery) Limit(limit int) *ProfilesQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *CommentsQuery) Offset(offset int) *CommentsQuery {
+func (_q *ProfilesQuery) Offset(offset int) *ProfilesQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *CommentsQuery) Unique(unique bool) *CommentsQuery {
+func (_q *ProfilesQuery) Unique(unique bool) *ProfilesQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *CommentsQuery) Order(o ...comments.OrderOption) *CommentsQuery {
+func (_q *ProfilesQuery) Order(o ...profiles.OrderOption) *ProfilesQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryUser chains the current query on the "user" edge.
-func (_q *CommentsQuery) QueryUser() *UserQuery {
+func (_q *ProfilesQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -74,9 +74,9 @@ func (_q *CommentsQuery) QueryUser() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(comments.Table, comments.FieldID, selector),
+			sqlgraph.From(profiles.Table, profiles.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, comments.UserTable, comments.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, profiles.UserTable, profiles.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -84,21 +84,21 @@ func (_q *CommentsQuery) QueryUser() *UserQuery {
 	return query
 }
 
-// First returns the first Comments entity from the query.
-// Returns a *NotFoundError when no Comments was found.
-func (_q *CommentsQuery) First(ctx context.Context) (*Comments, error) {
+// First returns the first Profiles entity from the query.
+// Returns a *NotFoundError when no Profiles was found.
+func (_q *ProfilesQuery) First(ctx context.Context) (*Profiles, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{comments.Label}
+		return nil, &NotFoundError{profiles.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *CommentsQuery) FirstX(ctx context.Context) *Comments {
+func (_q *ProfilesQuery) FirstX(ctx context.Context) *Profiles {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -106,22 +106,22 @@ func (_q *CommentsQuery) FirstX(ctx context.Context) *Comments {
 	return node
 }
 
-// FirstID returns the first Comments ID from the query.
-// Returns a *NotFoundError when no Comments ID was found.
-func (_q *CommentsQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Profiles ID from the query.
+// Returns a *NotFoundError when no Profiles ID was found.
+func (_q *ProfilesQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{comments.Label}
+		err = &NotFoundError{profiles.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *CommentsQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *ProfilesQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,10 +129,10 @@ func (_q *CommentsQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Comments entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Comments entity is found.
-// Returns a *NotFoundError when no Comments entities are found.
-func (_q *CommentsQuery) Only(ctx context.Context) (*Comments, error) {
+// Only returns a single Profiles entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Profiles entity is found.
+// Returns a *NotFoundError when no Profiles entities are found.
+func (_q *ProfilesQuery) Only(ctx context.Context) (*Profiles, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -141,14 +141,14 @@ func (_q *CommentsQuery) Only(ctx context.Context) (*Comments, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{comments.Label}
+		return nil, &NotFoundError{profiles.Label}
 	default:
-		return nil, &NotSingularError{comments.Label}
+		return nil, &NotSingularError{profiles.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *CommentsQuery) OnlyX(ctx context.Context) *Comments {
+func (_q *ProfilesQuery) OnlyX(ctx context.Context) *Profiles {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -156,10 +156,10 @@ func (_q *CommentsQuery) OnlyX(ctx context.Context) *Comments {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Comments ID in the query.
-// Returns a *NotSingularError when more than one Comments ID is found.
+// OnlyID is like Only, but returns the only Profiles ID in the query.
+// Returns a *NotSingularError when more than one Profiles ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *CommentsQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *ProfilesQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -168,15 +168,15 @@ func (_q *CommentsQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{comments.Label}
+		err = &NotFoundError{profiles.Label}
 	default:
-		err = &NotSingularError{comments.Label}
+		err = &NotSingularError{profiles.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *CommentsQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *ProfilesQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -184,18 +184,18 @@ func (_q *CommentsQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of CommentsSlice.
-func (_q *CommentsQuery) All(ctx context.Context) ([]*Comments, error) {
+// All executes the query and returns a list of ProfilesSlice.
+func (_q *ProfilesQuery) All(ctx context.Context) ([]*Profiles, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Comments, *CommentsQuery]()
-	return withInterceptors[[]*Comments](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Profiles, *ProfilesQuery]()
+	return withInterceptors[[]*Profiles](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *CommentsQuery) AllX(ctx context.Context) []*Comments {
+func (_q *ProfilesQuery) AllX(ctx context.Context) []*Profiles {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -203,20 +203,20 @@ func (_q *CommentsQuery) AllX(ctx context.Context) []*Comments {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Comments IDs.
-func (_q *CommentsQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Profiles IDs.
+func (_q *ProfilesQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(comments.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(profiles.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *CommentsQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *ProfilesQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -225,16 +225,16 @@ func (_q *CommentsQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *CommentsQuery) Count(ctx context.Context) (int, error) {
+func (_q *ProfilesQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*CommentsQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*ProfilesQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *CommentsQuery) CountX(ctx context.Context) int {
+func (_q *ProfilesQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -243,7 +243,7 @@ func (_q *CommentsQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *CommentsQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *ProfilesQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -256,7 +256,7 @@ func (_q *CommentsQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *CommentsQuery) ExistX(ctx context.Context) bool {
+func (_q *ProfilesQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -264,18 +264,18 @@ func (_q *CommentsQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the CommentsQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the ProfilesQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *CommentsQuery) Clone() *CommentsQuery {
+func (_q *ProfilesQuery) Clone() *ProfilesQuery {
 	if _q == nil {
 		return nil
 	}
-	return &CommentsQuery{
+	return &ProfilesQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]comments.OrderOption{}, _q.order...),
+		order:      append([]profiles.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Comments{}, _q.predicates...),
+		predicates: append([]predicate.Profiles{}, _q.predicates...),
 		withUser:   _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -285,7 +285,7 @@ func (_q *CommentsQuery) Clone() *CommentsQuery {
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *CommentsQuery) WithUser(opts ...func(*UserQuery)) *CommentsQuery {
+func (_q *ProfilesQuery) WithUser(opts ...func(*UserQuery)) *ProfilesQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -300,19 +300,19 @@ func (_q *CommentsQuery) WithUser(opts ...func(*UserQuery)) *CommentsQuery {
 // Example:
 //
 //	var v []struct {
-//		Contents string `json:"contents,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Comments.Query().
-//		GroupBy(comments.FieldContents).
+//	client.Profiles.Query().
+//		GroupBy(profiles.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *CommentsQuery) GroupBy(field string, fields ...string) *CommentsGroupBy {
+func (_q *ProfilesQuery) GroupBy(field string, fields ...string) *ProfilesGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &CommentsGroupBy{build: _q}
+	grbuild := &ProfilesGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = comments.Label
+	grbuild.label = profiles.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -323,26 +323,26 @@ func (_q *CommentsQuery) GroupBy(field string, fields ...string) *CommentsGroupB
 // Example:
 //
 //	var v []struct {
-//		Contents string `json:"contents,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
-//	client.Comments.Query().
-//		Select(comments.FieldContents).
+//	client.Profiles.Query().
+//		Select(profiles.FieldName).
 //		Scan(ctx, &v)
-func (_q *CommentsQuery) Select(fields ...string) *CommentsSelect {
+func (_q *ProfilesQuery) Select(fields ...string) *ProfilesSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &CommentsSelect{CommentsQuery: _q}
-	sbuild.label = comments.Label
+	sbuild := &ProfilesSelect{ProfilesQuery: _q}
+	sbuild.label = profiles.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a CommentsSelect configured with the given aggregations.
-func (_q *CommentsQuery) Aggregate(fns ...AggregateFunc) *CommentsSelect {
+// Aggregate returns a ProfilesSelect configured with the given aggregations.
+func (_q *ProfilesQuery) Aggregate(fns ...AggregateFunc) *ProfilesSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *CommentsQuery) prepareQuery(ctx context.Context) error {
+func (_q *ProfilesQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -354,7 +354,7 @@ func (_q *CommentsQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !comments.ValidColumn(f) {
+		if !profiles.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -368,9 +368,9 @@ func (_q *CommentsQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *CommentsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Comments, error) {
+func (_q *ProfilesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Profiles, error) {
 	var (
-		nodes       = []*Comments{}
+		nodes       = []*Profiles{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
@@ -381,13 +381,13 @@ func (_q *CommentsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Com
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, comments.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, profiles.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Comments).scanValues(nil, columns)
+		return (*Profiles).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Comments{config: _q.config}
+		node := &Profiles{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -403,21 +403,21 @@ func (_q *CommentsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Com
 	}
 	if query := _q.withUser; query != nil {
 		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *Comments, e *User) { n.Edges.User = e }); err != nil {
+			func(n *Profiles, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *CommentsQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Comments, init func(*Comments), assign func(*Comments, *User)) error {
+func (_q *ProfilesQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Profiles, init func(*Profiles), assign func(*Profiles, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Comments)
+	nodeids := make(map[uuid.UUID][]*Profiles)
 	for i := range nodes {
-		if nodes[i].user_comments == nil {
+		if nodes[i].user_profiles == nil {
 			continue
 		}
-		fk := *nodes[i].user_comments
+		fk := *nodes[i].user_profiles
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -434,7 +434,7 @@ func (_q *CommentsQuery) loadUser(ctx context.Context, query *UserQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_comments" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_profiles" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -443,7 +443,7 @@ func (_q *CommentsQuery) loadUser(ctx context.Context, query *UserQuery, nodes [
 	return nil
 }
 
-func (_q *CommentsQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *ProfilesQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -452,8 +452,8 @@ func (_q *CommentsQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *CommentsQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(comments.Table, comments.Columns, sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID))
+func (_q *ProfilesQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(profiles.Table, profiles.Columns, sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -462,9 +462,9 @@ func (_q *CommentsQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, comments.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, profiles.FieldID)
 		for i := range fields {
-			if fields[i] != comments.FieldID {
+			if fields[i] != profiles.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -492,12 +492,12 @@ func (_q *CommentsQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *CommentsQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *ProfilesQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(comments.Table)
+	t1 := builder.Table(profiles.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = comments.Columns
+		columns = profiles.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -524,28 +524,28 @@ func (_q *CommentsQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// CommentsGroupBy is the group-by builder for Comments entities.
-type CommentsGroupBy struct {
+// ProfilesGroupBy is the group-by builder for Profiles entities.
+type ProfilesGroupBy struct {
 	selector
-	build *CommentsQuery
+	build *ProfilesQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *CommentsGroupBy) Aggregate(fns ...AggregateFunc) *CommentsGroupBy {
+func (_g *ProfilesGroupBy) Aggregate(fns ...AggregateFunc) *ProfilesGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *CommentsGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *ProfilesGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CommentsQuery, *CommentsGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*ProfilesQuery, *ProfilesGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *CommentsGroupBy) sqlScan(ctx context.Context, root *CommentsQuery, v any) error {
+func (_g *ProfilesGroupBy) sqlScan(ctx context.Context, root *ProfilesQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -572,28 +572,28 @@ func (_g *CommentsGroupBy) sqlScan(ctx context.Context, root *CommentsQuery, v a
 	return sql.ScanSlice(rows, v)
 }
 
-// CommentsSelect is the builder for selecting fields of Comments entities.
-type CommentsSelect struct {
-	*CommentsQuery
+// ProfilesSelect is the builder for selecting fields of Profiles entities.
+type ProfilesSelect struct {
+	*ProfilesQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *CommentsSelect) Aggregate(fns ...AggregateFunc) *CommentsSelect {
+func (_s *ProfilesSelect) Aggregate(fns ...AggregateFunc) *ProfilesSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *CommentsSelect) Scan(ctx context.Context, v any) error {
+func (_s *ProfilesSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CommentsQuery, *CommentsSelect](ctx, _s.CommentsQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*ProfilesQuery, *ProfilesSelect](ctx, _s.ProfilesQuery, _s, _s.inters, v)
 }
 
-func (_s *CommentsSelect) sqlScan(ctx context.Context, root *CommentsQuery, v any) error {
+func (_s *ProfilesSelect) sqlScan(ctx context.Context, root *ProfilesQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

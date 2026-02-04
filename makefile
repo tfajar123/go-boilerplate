@@ -1,6 +1,7 @@
 # =========================
 # CONFIG
 # =========================
+SHELL := /bin/bash
 ENV_FILE := .env
 ENT_DIR := ent
 MIGRATIONS_DIR := migrations

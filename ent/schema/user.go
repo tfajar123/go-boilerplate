@@ -30,6 +30,6 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("comments", Comments.Type),
+		edge.To("profiles", Profiles.Type),
 	}
 }

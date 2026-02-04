@@ -8,23 +8,26 @@ import (
 )
 
 var (
-	// CommentsColumns holds the columns for the "comments" table.
-	CommentsColumns = []*schema.Column{
+	// ProfilesColumns holds the columns for the "profiles" table.
+	ProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "contents", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "image_url", Type: field.TypeString, Nullable: true},
+		{Name: "birth_date", Type: field.TypeString, Nullable: true},
+		{Name: "address", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "user_comments", Type: field.TypeUUID},
+		{Name: "user_profiles", Type: field.TypeUUID},
 	}
-	// CommentsTable holds the schema information for the "comments" table.
-	CommentsTable = &schema.Table{
-		Name:       "comments",
-		Columns:    CommentsColumns,
-		PrimaryKey: []*schema.Column{CommentsColumns[0]},
+	// ProfilesTable holds the schema information for the "profiles" table.
+	ProfilesTable = &schema.Table{
+		Name:       "profiles",
+		Columns:    ProfilesColumns,
+		PrimaryKey: []*schema.Column{ProfilesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "comments_users_comments",
-				Columns:    []*schema.Column{CommentsColumns[4]},
+				Symbol:     "profiles_users_profiles",
+				Columns:    []*schema.Column{ProfilesColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -48,11 +51,11 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		CommentsTable,
+		ProfilesTable,
 		UsersTable,
 	}
 )
 
 func init() {
-	CommentsTable.ForeignKeys[0].RefTable = UsersTable
+	ProfilesTable.ForeignKeys[0].RefTable = UsersTable
 }

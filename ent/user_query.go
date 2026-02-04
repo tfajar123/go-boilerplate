@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-	"go-boilerplate/ent/comments"
 	"go-boilerplate/ent/predicate"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"math"
 
@@ -25,7 +25,7 @@ type UserQuery struct {
 	order        []user.OrderOption
 	inters       []Interceptor
 	predicates   []predicate.User
-	withComments *CommentsQuery
+	withProfiles *ProfilesQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -62,9 +62,9 @@ func (_q *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return _q
 }
 
-// QueryComments chains the current query on the "comments" edge.
-func (_q *UserQuery) QueryComments() *CommentsQuery {
-	query := (&CommentsClient{config: _q.config}).Query()
+// QueryProfiles chains the current query on the "profiles" edge.
+func (_q *UserQuery) QueryProfiles() *ProfilesQuery {
+	query := (&ProfilesClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,8 +75,8 @@ func (_q *UserQuery) QueryComments() *CommentsQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(comments.Table, comments.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.CommentsTable, user.CommentsColumn),
+			sqlgraph.To(profiles.Table, profiles.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ProfilesTable, user.ProfilesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -276,21 +276,21 @@ func (_q *UserQuery) Clone() *UserQuery {
 		order:        append([]user.OrderOption{}, _q.order...),
 		inters:       append([]Interceptor{}, _q.inters...),
 		predicates:   append([]predicate.User{}, _q.predicates...),
-		withComments: _q.withComments.Clone(),
+		withProfiles: _q.withProfiles.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithComments tells the query-builder to eager-load the nodes that are connected to
-// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithComments(opts ...func(*CommentsQuery)) *UserQuery {
-	query := (&CommentsClient{config: _q.config}).Query()
+// WithProfiles tells the query-builder to eager-load the nodes that are connected to
+// the "profiles" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithProfiles(opts ...func(*ProfilesQuery)) *UserQuery {
+	query := (&ProfilesClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withComments = query
+	_q.withProfiles = query
 	return _q
 }
 
@@ -373,7 +373,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withComments != nil,
+			_q.withProfiles != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -394,17 +394,17 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withComments; query != nil {
-		if err := _q.loadComments(ctx, query, nodes,
-			func(n *User) { n.Edges.Comments = []*Comments{} },
-			func(n *User, e *Comments) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+	if query := _q.withProfiles; query != nil {
+		if err := _q.loadProfiles(ctx, query, nodes,
+			func(n *User) { n.Edges.Profiles = []*Profiles{} },
+			func(n *User, e *Profiles) { n.Edges.Profiles = append(n.Edges.Profiles, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *UserQuery) loadComments(ctx context.Context, query *CommentsQuery, nodes []*User, init func(*User), assign func(*User, *Comments)) error {
+func (_q *UserQuery) loadProfiles(ctx context.Context, query *ProfilesQuery, nodes []*User, init func(*User), assign func(*User, *Profiles)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -415,21 +415,21 @@ func (_q *UserQuery) loadComments(ctx context.Context, query *CommentsQuery, nod
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Comments(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.CommentsColumn), fks...))
+	query.Where(predicate.Profiles(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ProfilesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_comments
+		fk := n.user_profiles
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_comments" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_profiles" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_comments" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_profiles" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

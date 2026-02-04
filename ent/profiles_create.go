@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-boilerplate/ent/comments"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"time"
 
@@ -15,27 +15,69 @@ import (
 	"github.com/google/uuid"
 )
 
-// CommentsCreate is the builder for creating a Comments entity.
-type CommentsCreate struct {
+// ProfilesCreate is the builder for creating a Profiles entity.
+type ProfilesCreate struct {
 	config
-	mutation *CommentsMutation
+	mutation *ProfilesMutation
 	hooks    []Hook
 }
 
-// SetContents sets the "contents" field.
-func (_c *CommentsCreate) SetContents(v string) *CommentsCreate {
-	_c.mutation.SetContents(v)
+// SetName sets the "name" field.
+func (_c *ProfilesCreate) SetName(v string) *ProfilesCreate {
+	_c.mutation.SetName(v)
+	return _c
+}
+
+// SetImageUrl sets the "imageUrl" field.
+func (_c *ProfilesCreate) SetImageUrl(v string) *ProfilesCreate {
+	_c.mutation.SetImageUrl(v)
+	return _c
+}
+
+// SetNillableImageUrl sets the "imageUrl" field if the given value is not nil.
+func (_c *ProfilesCreate) SetNillableImageUrl(v *string) *ProfilesCreate {
+	if v != nil {
+		_c.SetImageUrl(*v)
+	}
+	return _c
+}
+
+// SetBirthDate sets the "birthDate" field.
+func (_c *ProfilesCreate) SetBirthDate(v string) *ProfilesCreate {
+	_c.mutation.SetBirthDate(v)
+	return _c
+}
+
+// SetNillableBirthDate sets the "birthDate" field if the given value is not nil.
+func (_c *ProfilesCreate) SetNillableBirthDate(v *string) *ProfilesCreate {
+	if v != nil {
+		_c.SetBirthDate(*v)
+	}
+	return _c
+}
+
+// SetAddress sets the "address" field.
+func (_c *ProfilesCreate) SetAddress(v string) *ProfilesCreate {
+	_c.mutation.SetAddress(v)
+	return _c
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (_c *ProfilesCreate) SetNillableAddress(v *string) *ProfilesCreate {
+	if v != nil {
+		_c.SetAddress(*v)
+	}
 	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (_c *CommentsCreate) SetCreatedAt(v time.Time) *CommentsCreate {
+func (_c *ProfilesCreate) SetCreatedAt(v time.Time) *ProfilesCreate {
 	_c.mutation.SetCreatedAt(v)
 	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *CommentsCreate) SetNillableCreatedAt(v *time.Time) *CommentsCreate {
+func (_c *ProfilesCreate) SetNillableCreatedAt(v *time.Time) *ProfilesCreate {
 	if v != nil {
 		_c.SetCreatedAt(*v)
 	}
@@ -43,13 +85,13 @@ func (_c *CommentsCreate) SetNillableCreatedAt(v *time.Time) *CommentsCreate {
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_c *CommentsCreate) SetUpdatedAt(v time.Time) *CommentsCreate {
+func (_c *ProfilesCreate) SetUpdatedAt(v time.Time) *ProfilesCreate {
 	_c.mutation.SetUpdatedAt(v)
 	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *CommentsCreate) SetNillableUpdatedAt(v *time.Time) *CommentsCreate {
+func (_c *ProfilesCreate) SetNillableUpdatedAt(v *time.Time) *ProfilesCreate {
 	if v != nil {
 		_c.SetUpdatedAt(*v)
 	}
@@ -57,13 +99,13 @@ func (_c *CommentsCreate) SetNillableUpdatedAt(v *time.Time) *CommentsCreate {
 }
 
 // SetID sets the "id" field.
-func (_c *CommentsCreate) SetID(v uuid.UUID) *CommentsCreate {
+func (_c *ProfilesCreate) SetID(v uuid.UUID) *ProfilesCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (_c *CommentsCreate) SetNillableID(v *uuid.UUID) *CommentsCreate {
+func (_c *ProfilesCreate) SetNillableID(v *uuid.UUID) *ProfilesCreate {
 	if v != nil {
 		_c.SetID(*v)
 	}
@@ -71,29 +113,29 @@ func (_c *CommentsCreate) SetNillableID(v *uuid.UUID) *CommentsCreate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (_c *CommentsCreate) SetUserID(id uuid.UUID) *CommentsCreate {
+func (_c *ProfilesCreate) SetUserID(id uuid.UUID) *ProfilesCreate {
 	_c.mutation.SetUserID(id)
 	return _c
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (_c *CommentsCreate) SetUser(v *User) *CommentsCreate {
+func (_c *ProfilesCreate) SetUser(v *User) *ProfilesCreate {
 	return _c.SetUserID(v.ID)
 }
 
-// Mutation returns the CommentsMutation object of the builder.
-func (_c *CommentsCreate) Mutation() *CommentsMutation {
+// Mutation returns the ProfilesMutation object of the builder.
+func (_c *ProfilesCreate) Mutation() *ProfilesMutation {
 	return _c.mutation
 }
 
-// Save creates the Comments in the database.
-func (_c *CommentsCreate) Save(ctx context.Context) (*Comments, error) {
+// Save creates the Profiles in the database.
+func (_c *ProfilesCreate) Save(ctx context.Context) (*Profiles, error) {
 	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *CommentsCreate) SaveX(ctx context.Context) *Comments {
+func (_c *ProfilesCreate) SaveX(ctx context.Context) *Profiles {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -102,52 +144,52 @@ func (_c *CommentsCreate) SaveX(ctx context.Context) *Comments {
 }
 
 // Exec executes the query.
-func (_c *CommentsCreate) Exec(ctx context.Context) error {
+func (_c *ProfilesCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *CommentsCreate) ExecX(ctx context.Context) {
+func (_c *ProfilesCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *CommentsCreate) defaults() {
+func (_c *ProfilesCreate) defaults() {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := comments.DefaultCreatedAt
+		v := profiles.DefaultCreatedAt
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		v := comments.DefaultUpdatedAt
+		v := profiles.DefaultUpdatedAt
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		v := comments.DefaultID()
+		v := profiles.DefaultID()
 		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *CommentsCreate) check() error {
-	if _, ok := _c.mutation.Contents(); !ok {
-		return &ValidationError{Name: "contents", err: errors.New(`ent: missing required field "Comments.contents"`)}
+func (_c *ProfilesCreate) check() error {
+	if _, ok := _c.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Profiles.name"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Comments.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Profiles.created_at"`)}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Comments.updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Profiles.updated_at"`)}
 	}
 	if len(_c.mutation.UserIDs()) == 0 {
-		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Comments.user"`)}
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Profiles.user"`)}
 	}
 	return nil
 }
 
-func (_c *CommentsCreate) sqlSave(ctx context.Context) (*Comments, error) {
+func (_c *ProfilesCreate) sqlSave(ctx context.Context) (*Profiles, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -170,33 +212,45 @@ func (_c *CommentsCreate) sqlSave(ctx context.Context) (*Comments, error) {
 	return _node, nil
 }
 
-func (_c *CommentsCreate) createSpec() (*Comments, *sqlgraph.CreateSpec) {
+func (_c *ProfilesCreate) createSpec() (*Profiles, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Comments{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(comments.Table, sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID))
+		_node = &Profiles{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(profiles.Table, sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID))
 	)
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := _c.mutation.Contents(); ok {
-		_spec.SetField(comments.FieldContents, field.TypeString, value)
-		_node.Contents = value
+	if value, ok := _c.mutation.Name(); ok {
+		_spec.SetField(profiles.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := _c.mutation.ImageUrl(); ok {
+		_spec.SetField(profiles.FieldImageUrl, field.TypeString, value)
+		_node.ImageUrl = value
+	}
+	if value, ok := _c.mutation.BirthDate(); ok {
+		_spec.SetField(profiles.FieldBirthDate, field.TypeString, value)
+		_node.BirthDate = value
+	}
+	if value, ok := _c.mutation.Address(); ok {
+		_spec.SetField(profiles.FieldAddress, field.TypeString, value)
+		_node.Address = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(comments.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(profiles.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(comments.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(profiles.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   comments.UserTable,
-			Columns: []string{comments.UserColumn},
+			Table:   profiles.UserTable,
+			Columns: []string{profiles.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
@@ -205,33 +259,33 @@ func (_c *CommentsCreate) createSpec() (*Comments, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_comments = &nodes[0]
+		_node.user_profiles = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
 
-// CommentsCreateBulk is the builder for creating many Comments entities in bulk.
-type CommentsCreateBulk struct {
+// ProfilesCreateBulk is the builder for creating many Profiles entities in bulk.
+type ProfilesCreateBulk struct {
 	config
 	err      error
-	builders []*CommentsCreate
+	builders []*ProfilesCreate
 }
 
-// Save creates the Comments entities in the database.
-func (_c *CommentsCreateBulk) Save(ctx context.Context) ([]*Comments, error) {
+// Save creates the Profiles entities in the database.
+func (_c *ProfilesCreateBulk) Save(ctx context.Context) ([]*Profiles, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*Comments, len(_c.builders))
+	nodes := make([]*Profiles, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*CommentsMutation)
+				mutation, ok := m.(*ProfilesMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -274,7 +328,7 @@ func (_c *CommentsCreateBulk) Save(ctx context.Context) ([]*Comments, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *CommentsCreateBulk) SaveX(ctx context.Context) []*Comments {
+func (_c *ProfilesCreateBulk) SaveX(ctx context.Context) []*Profiles {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -283,13 +337,13 @@ func (_c *CommentsCreateBulk) SaveX(ctx context.Context) []*Comments {
 }
 
 // Exec executes the query.
-func (_c *CommentsCreateBulk) Exec(ctx context.Context) error {
+func (_c *ProfilesCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *CommentsCreateBulk) ExecX(ctx context.Context) {
+func (_c *ProfilesCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
