@@ -11,27 +11,30 @@ import (
 
 func RateLimiter(limit int, window time.Duration) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+
 		key := fmt.Sprintf("rl:%s:%s", c.IP(), c.Path())
 
-		count, err := database.Redis.Incr(c.Context(), key).Result()
+		count, err := database.Redis.Incr(ctx, key).Result()
 		if err != nil {
-			return c.Status(500).JSON(fiber.Map{
-				"status":  500,
-				"error":   err.Error(),
-				"message": "Redis error",
-			})
+			return fiber.ErrInternalServerError
 		}
 
 		if count == 1 {
-			database.Redis.Expire(c.Context(), key, window)
+			_ = database.Redis.Expire(ctx, key, window)
 		}
 
+		remaining := limit - int(count)
+		remaining = max(limit-int(count), 0)
+
+		c.Set("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
+		c.Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+
 		if count > int64(limit) {
-			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-				"status":  429,
-				"error":   "Too many requests",
-				"message": "Terlalu banyak request, coba lagi nanti",
-			})
+			ttl, _ := database.Redis.TTL(ctx, key).Result()
+			c.Set("Retry-After", fmt.Sprintf("%d", int(ttl.Seconds())))
+
+			return fiber.ErrTooManyRequests
 		}
 
 		return c.Next()
