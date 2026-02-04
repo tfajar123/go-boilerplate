@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-boilerplate/ent/comments"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"time"
 
@@ -96,19 +96,19 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 	return _c
 }
 
-// AddCommentIDs adds the "comments" edge to the Comments entity by IDs.
-func (_c *UserCreate) AddCommentIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddCommentIDs(ids...)
+// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
+func (_c *UserCreate) AddProfileIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddProfileIDs(ids...)
 	return _c
 }
 
-// AddComments adds the "comments" edges to the Comments entity.
-func (_c *UserCreate) AddComments(v ...*Comments) *UserCreate {
+// AddProfiles adds the "profiles" edges to the Profiles entity.
+func (_c *UserCreate) AddProfiles(v ...*Profiles) *UserCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddCommentIDs(ids...)
+	return _c.AddProfileIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -248,15 +248,15 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := _c.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.CommentsTable,
-			Columns: []string{user.CommentsColumn},
+			Table:   user.ProfilesTable,
+			Columns: []string{user.ProfilesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

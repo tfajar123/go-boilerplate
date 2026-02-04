@@ -11,7 +11,7 @@ import (
 
 	"go-boilerplate/ent/migrate"
 
-	"go-boilerplate/ent/comments"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 
 	"entgo.io/ent"
@@ -26,8 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Comments is the client for interacting with the Comments builders.
-	Comments *CommentsClient
+	// Profiles is the client for interacting with the Profiles builders.
+	Profiles *ProfilesClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -41,7 +41,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Comments = NewCommentsClient(c.config)
+	c.Profiles = NewProfilesClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -135,7 +135,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:      ctx,
 		config:   cfg,
-		Comments: NewCommentsClient(cfg),
+		Profiles: NewProfilesClient(cfg),
 		User:     NewUserClient(cfg),
 	}, nil
 }
@@ -156,7 +156,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:      ctx,
 		config:   cfg,
-		Comments: NewCommentsClient(cfg),
+		Profiles: NewProfilesClient(cfg),
 		User:     NewUserClient(cfg),
 	}, nil
 }
@@ -164,7 +164,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Comments.
+//		Profiles.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -186,22 +186,22 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Comments.Use(hooks...)
+	c.Profiles.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Comments.Intercept(interceptors...)
+	c.Profiles.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *CommentsMutation:
-		return c.Comments.mutate(ctx, m)
+	case *ProfilesMutation:
+		return c.Profiles.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -209,107 +209,107 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	}
 }
 
-// CommentsClient is a client for the Comments schema.
-type CommentsClient struct {
+// ProfilesClient is a client for the Profiles schema.
+type ProfilesClient struct {
 	config
 }
 
-// NewCommentsClient returns a client for the Comments from the given config.
-func NewCommentsClient(c config) *CommentsClient {
-	return &CommentsClient{config: c}
+// NewProfilesClient returns a client for the Profiles from the given config.
+func NewProfilesClient(c config) *ProfilesClient {
+	return &ProfilesClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `comments.Hooks(f(g(h())))`.
-func (c *CommentsClient) Use(hooks ...Hook) {
-	c.hooks.Comments = append(c.hooks.Comments, hooks...)
+// A call to `Use(f, g, h)` equals to `profiles.Hooks(f(g(h())))`.
+func (c *ProfilesClient) Use(hooks ...Hook) {
+	c.hooks.Profiles = append(c.hooks.Profiles, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `comments.Intercept(f(g(h())))`.
-func (c *CommentsClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Comments = append(c.inters.Comments, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `profiles.Intercept(f(g(h())))`.
+func (c *ProfilesClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Profiles = append(c.inters.Profiles, interceptors...)
 }
 
-// Create returns a builder for creating a Comments entity.
-func (c *CommentsClient) Create() *CommentsCreate {
-	mutation := newCommentsMutation(c.config, OpCreate)
-	return &CommentsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Profiles entity.
+func (c *ProfilesClient) Create() *ProfilesCreate {
+	mutation := newProfilesMutation(c.config, OpCreate)
+	return &ProfilesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Comments entities.
-func (c *CommentsClient) CreateBulk(builders ...*CommentsCreate) *CommentsCreateBulk {
-	return &CommentsCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Profiles entities.
+func (c *ProfilesClient) CreateBulk(builders ...*ProfilesCreate) *ProfilesCreateBulk {
+	return &ProfilesCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *CommentsClient) MapCreateBulk(slice any, setFunc func(*CommentsCreate, int)) *CommentsCreateBulk {
+func (c *ProfilesClient) MapCreateBulk(slice any, setFunc func(*ProfilesCreate, int)) *ProfilesCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &CommentsCreateBulk{err: fmt.Errorf("calling to CommentsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ProfilesCreateBulk{err: fmt.Errorf("calling to ProfilesClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*CommentsCreate, rv.Len())
+	builders := make([]*ProfilesCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &CommentsCreateBulk{config: c.config, builders: builders}
+	return &ProfilesCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Comments.
-func (c *CommentsClient) Update() *CommentsUpdate {
-	mutation := newCommentsMutation(c.config, OpUpdate)
-	return &CommentsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Profiles.
+func (c *ProfilesClient) Update() *ProfilesUpdate {
+	mutation := newProfilesMutation(c.config, OpUpdate)
+	return &ProfilesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CommentsClient) UpdateOne(_m *Comments) *CommentsUpdateOne {
-	mutation := newCommentsMutation(c.config, OpUpdateOne, withComments(_m))
-	return &CommentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProfilesClient) UpdateOne(_m *Profiles) *ProfilesUpdateOne {
+	mutation := newProfilesMutation(c.config, OpUpdateOne, withProfiles(_m))
+	return &ProfilesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CommentsClient) UpdateOneID(id uuid.UUID) *CommentsUpdateOne {
-	mutation := newCommentsMutation(c.config, OpUpdateOne, withCommentsID(id))
-	return &CommentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProfilesClient) UpdateOneID(id uuid.UUID) *ProfilesUpdateOne {
+	mutation := newProfilesMutation(c.config, OpUpdateOne, withProfilesID(id))
+	return &ProfilesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Comments.
-func (c *CommentsClient) Delete() *CommentsDelete {
-	mutation := newCommentsMutation(c.config, OpDelete)
-	return &CommentsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Profiles.
+func (c *ProfilesClient) Delete() *ProfilesDelete {
+	mutation := newProfilesMutation(c.config, OpDelete)
+	return &ProfilesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CommentsClient) DeleteOne(_m *Comments) *CommentsDeleteOne {
+func (c *ProfilesClient) DeleteOne(_m *Profiles) *ProfilesDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CommentsClient) DeleteOneID(id uuid.UUID) *CommentsDeleteOne {
-	builder := c.Delete().Where(comments.ID(id))
+func (c *ProfilesClient) DeleteOneID(id uuid.UUID) *ProfilesDeleteOne {
+	builder := c.Delete().Where(profiles.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &CommentsDeleteOne{builder}
+	return &ProfilesDeleteOne{builder}
 }
 
-// Query returns a query builder for Comments.
-func (c *CommentsClient) Query() *CommentsQuery {
-	return &CommentsQuery{
+// Query returns a query builder for Profiles.
+func (c *ProfilesClient) Query() *ProfilesQuery {
+	return &ProfilesQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeComments},
+		ctx:    &QueryContext{Type: TypeProfiles},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Comments entity by its id.
-func (c *CommentsClient) Get(ctx context.Context, id uuid.UUID) (*Comments, error) {
-	return c.Query().Where(comments.ID(id)).Only(ctx)
+// Get returns a Profiles entity by its id.
+func (c *ProfilesClient) Get(ctx context.Context, id uuid.UUID) (*Profiles, error) {
+	return c.Query().Where(profiles.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CommentsClient) GetX(ctx context.Context, id uuid.UUID) *Comments {
+func (c *ProfilesClient) GetX(ctx context.Context, id uuid.UUID) *Profiles {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -317,15 +317,15 @@ func (c *CommentsClient) GetX(ctx context.Context, id uuid.UUID) *Comments {
 	return obj
 }
 
-// QueryUser queries the user edge of a Comments.
-func (c *CommentsClient) QueryUser(_m *Comments) *UserQuery {
+// QueryUser queries the user edge of a Profiles.
+func (c *ProfilesClient) QueryUser(_m *Profiles) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(comments.Table, comments.FieldID, id),
+			sqlgraph.From(profiles.Table, profiles.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, comments.UserTable, comments.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, profiles.UserTable, profiles.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -334,27 +334,27 @@ func (c *CommentsClient) QueryUser(_m *Comments) *UserQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *CommentsClient) Hooks() []Hook {
-	return c.hooks.Comments
+func (c *ProfilesClient) Hooks() []Hook {
+	return c.hooks.Profiles
 }
 
 // Interceptors returns the client interceptors.
-func (c *CommentsClient) Interceptors() []Interceptor {
-	return c.inters.Comments
+func (c *ProfilesClient) Interceptors() []Interceptor {
+	return c.inters.Profiles
 }
 
-func (c *CommentsClient) mutate(ctx context.Context, m *CommentsMutation) (Value, error) {
+func (c *ProfilesClient) mutate(ctx context.Context, m *ProfilesMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&CommentsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProfilesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&CommentsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProfilesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&CommentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProfilesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&CommentsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ProfilesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Comments mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Profiles mutation op: %q", m.Op())
 	}
 }
 
@@ -466,15 +466,15 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
-// QueryComments queries the comments edge of a User.
-func (c *UserClient) QueryComments(_m *User) *CommentsQuery {
-	query := (&CommentsClient{config: c.config}).Query()
+// QueryProfiles queries the profiles edge of a User.
+func (c *UserClient) QueryProfiles(_m *User) *ProfilesQuery {
+	query := (&ProfilesClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(comments.Table, comments.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.CommentsTable, user.CommentsColumn),
+			sqlgraph.To(profiles.Table, profiles.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ProfilesTable, user.ProfilesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -510,9 +510,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Comments, User []ent.Hook
+		Profiles, User []ent.Hook
 	}
 	inters struct {
-		Comments, User []ent.Interceptor
+		Profiles, User []ent.Interceptor
 	}
 )

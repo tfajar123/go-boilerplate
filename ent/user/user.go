@@ -28,17 +28,17 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// EdgeComments holds the string denoting the comments edge name in mutations.
-	EdgeComments = "comments"
+	// EdgeProfiles holds the string denoting the profiles edge name in mutations.
+	EdgeProfiles = "profiles"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// CommentsTable is the table that holds the comments relation/edge.
-	CommentsTable = "comments"
-	// CommentsInverseTable is the table name for the Comments entity.
-	// It exists in this package in order to avoid circular dependency with the "comments" package.
-	CommentsInverseTable = "comments"
-	// CommentsColumn is the table column denoting the comments relation/edge.
-	CommentsColumn = "user_comments"
+	// ProfilesTable is the table that holds the profiles relation/edge.
+	ProfilesTable = "profiles"
+	// ProfilesInverseTable is the table name for the Profiles entity.
+	// It exists in this package in order to avoid circular dependency with the "profiles" package.
+	ProfilesInverseTable = "profiles"
+	// ProfilesColumn is the table column denoting the profiles relation/edge.
+	ProfilesColumn = "user_profiles"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -135,23 +135,23 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByCommentsCount orders the results by comments count.
-func ByCommentsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByProfilesCount orders the results by profiles count.
+func ByProfilesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newCommentsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newProfilesStep(), opts...)
 	}
 }
 
-// ByComments orders the results by comments terms.
-func ByComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByProfiles orders the results by profiles terms.
+func ByProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newProfilesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newCommentsStep() *sqlgraph.Step {
+func newProfilesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(CommentsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, CommentsTable, CommentsColumn),
+		sqlgraph.To(ProfilesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ProfilesTable, ProfilesColumn),
 	)
 }

@@ -38,20 +38,20 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Comments holds the value of the comments edge.
-	Comments []*Comments `json:"comments,omitempty"`
+	// Profiles holds the value of the profiles edge.
+	Profiles []*Profiles `json:"profiles,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// CommentsOrErr returns the Comments value or an error if the edge
+// ProfilesOrErr returns the Profiles value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) CommentsOrErr() ([]*Comments, error) {
+func (e UserEdges) ProfilesOrErr() ([]*Profiles, error) {
 	if e.loadedTypes[0] {
-		return e.Comments, nil
+		return e.Profiles, nil
 	}
-	return nil, &NotLoadedError{edge: "comments"}
+	return nil, &NotLoadedError{edge: "profiles"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -135,9 +135,9 @@ func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryComments queries the "comments" edge of the User entity.
-func (_m *User) QueryComments() *CommentsQuery {
-	return NewUserClient(_m.config).QueryComments(_m)
+// QueryProfiles queries the "profiles" edge of the User entity.
+func (_m *User) QueryProfiles() *ProfilesQuery {
+	return NewUserClient(_m.config).QueryProfiles(_m)
 }
 
 // Update returns a builder for updating this User.

@@ -4,34 +4,34 @@ package ent
 
 import (
 	"context"
-	"go-boilerplate/ent/comments"
 	"go-boilerplate/ent/predicate"
+	"go-boilerplate/ent/profiles"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
 
-// CommentsDelete is the builder for deleting a Comments entity.
-type CommentsDelete struct {
+// ProfilesDelete is the builder for deleting a Profiles entity.
+type ProfilesDelete struct {
 	config
 	hooks    []Hook
-	mutation *CommentsMutation
+	mutation *ProfilesMutation
 }
 
-// Where appends a list predicates to the CommentsDelete builder.
-func (_d *CommentsDelete) Where(ps ...predicate.Comments) *CommentsDelete {
+// Where appends a list predicates to the ProfilesDelete builder.
+func (_d *ProfilesDelete) Where(ps ...predicate.Profiles) *ProfilesDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *CommentsDelete) Exec(ctx context.Context) (int, error) {
+func (_d *ProfilesDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *CommentsDelete) ExecX(ctx context.Context) int {
+func (_d *ProfilesDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *CommentsDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *CommentsDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(comments.Table, sqlgraph.NewFieldSpec(comments.FieldID, field.TypeUUID))
+func (_d *ProfilesDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(profiles.Table, sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *CommentsDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// CommentsDeleteOne is the builder for deleting a single Comments entity.
-type CommentsDeleteOne struct {
-	_d *CommentsDelete
+// ProfilesDeleteOne is the builder for deleting a single Profiles entity.
+type ProfilesDeleteOne struct {
+	_d *ProfilesDelete
 }
 
-// Where appends a list predicates to the CommentsDelete builder.
-func (_d *CommentsDeleteOne) Where(ps ...predicate.Comments) *CommentsDeleteOne {
+// Where appends a list predicates to the ProfilesDelete builder.
+func (_d *ProfilesDeleteOne) Where(ps ...predicate.Profiles) *ProfilesDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *CommentsDeleteOne) Exec(ctx context.Context) error {
+func (_d *ProfilesDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{comments.Label}
+		return &NotFoundError{profiles.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *CommentsDeleteOne) ExecX(ctx context.Context) {
+func (_d *ProfilesDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

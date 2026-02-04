@@ -9,23 +9,26 @@ import (
 	"github.com/google/uuid"
 )
 
-type Comments struct {
+type Profiles struct {
 	ent.Schema
 }
 
-func (Comments) Fields() []ent.Field {
+func (Profiles) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Unique().Default(uuid.New),
-		field.String("contents"),
+		field.String("name"),
+		field.String("imageUrl").Optional(),
+		field.String("birthDate").Optional(),
+		field.String("address").Optional(),
 		field.Time("created_at").Default(time.Now()),
 		field.Time("updated_at").Default(time.Now()),
 	}
 }
 
-func (Comments) Edges() []ent.Edge {
+func (Profiles) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
-			Ref("comments").
+			Ref("profiles").
 			Unique().
 			Required(),
 	}
