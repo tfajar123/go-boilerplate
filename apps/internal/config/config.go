@@ -17,8 +17,9 @@ type RedisConfig struct {
 	TLS      bool
 }
 
-type MinioConfig struct {
+type StorageConfig struct {
 	Endpoint  string
+	Region    string
 	AccessKey string
 	SecretKey string
 	Bucket    string
@@ -26,11 +27,11 @@ type MinioConfig struct {
 }
 
 type Config struct {
-	AppEnv string
-	DBUrl  string
-	Port   string
-	Redis  RedisConfig
-	Minio  MinioConfig
+	AppEnv  string
+	DBUrl   string
+	Port    string
+	Redis   RedisConfig
+	Storage StorageConfig
 }
 
 func Load() *Config {
@@ -53,18 +54,15 @@ func Load() *Config {
 			TLS:      os.Getenv("REDIS_TLS") == "true",
 		},
 
-		Minio: MinioConfig{
-			Endpoint:  os.Getenv("MINIO_ENDPOINT"),
-			AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
-			SecretKey: os.Getenv("MINIO_SECRET_KEY"),
-			Bucket:    os.Getenv("MINIO_BUCKET"),
-			UseSSL:    os.Getenv("MINIO_USE_SSL") == "true",
+		Storage: StorageConfig{
+			Endpoint:  os.Getenv("STORAGE_ENDPOINT"),
+			AccessKey: os.Getenv("STORAGE_ACCESS_KEY"),
+			SecretKey: os.Getenv("STORAGE_SECRET_KEY"),
+			Bucket:    os.Getenv("STORAGE_BUCKET"),
+			UseSSL:    os.Getenv("STORAGE_USE_SSL") == "true",
 		},
 	}
 
-	// =====================
-	// Validation
-	// =====================
 	if cfg.DBUrl == "" {
 		log.Fatal("DATABASE_URL is required")
 	}
@@ -73,12 +71,12 @@ func Load() *Config {
 		cfg.Port = "3000"
 	}
 
-	if cfg.Minio.Endpoint == "" {
-		log.Fatal("MINIO_ENDPOINT is required")
+	if cfg.Storage.Endpoint == "" {
+		log.Fatal("STORAGE_ENDPOINT is required")
 	}
 
-	if cfg.Minio.Bucket == "" {
-		log.Fatal("MINIO_BUCKET is required")
+	if cfg.Storage.Bucket == "" {
+		log.Fatal("STORAGE_BUCKET is required")
 	}
 
 	return cfg

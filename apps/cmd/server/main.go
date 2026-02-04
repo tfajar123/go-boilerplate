@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"go-boilerplate/apps/internal/config"
 	"go-boilerplate/apps/internal/database"
 	middlewares "go-boilerplate/apps/internal/middleware"
@@ -37,8 +36,11 @@ func main() {
 		zap.Int("db", cfg.Redis.DB),
 	)
 
-	minioClient := database.NewMinioClient(cfg.Minio)
-	database.EnsureBucket(context.Background(), minioClient, cfg.Minio.Bucket)
+	storage := database.NewStorage(cfg.Storage)
+	utils.Logger.Info("storage connected",
+		zap.String("endpoint", cfg.Storage.Endpoint),
+		zap.String("bucket", cfg.Storage.Bucket),
+	)
 
 	// init fiber
 	app := fiber.New()
@@ -55,7 +57,7 @@ func main() {
 	app.Use(middlewares.RequestLogger())
 
 	// inject dependencies
-	route.Register(app, entClient)
+	route.Register(app, entClient, storage)
 
 	if err := app.Listen(":" + cfg.Port); err != nil {
 		utils.Logger.Fatal("failed to start server", zap.Error(err))

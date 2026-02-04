@@ -6,18 +6,15 @@ import (
 	"mime/multipart"
 	"path/filepath"
 
+	"go-boilerplate/apps/internal/database"
+
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
 
-// ========================
-// Upload
-// ========================
-
-func UploadToMinio(
+func UploadToStorage(
 	ctx context.Context,
-	client *minio.Client,
-	bucket string,
+	storage *database.Storage,
 	file *multipart.FileHeader,
 	folder string,
 ) (string, error) {
@@ -37,9 +34,9 @@ func UploadToMinio(
 		ext,
 	)
 
-	_, err = client.PutObject(
+	_, err = storage.Client.PutObject(
 		ctx,
-		bucket,
+		storage.Bucket,
 		objectName,
 		src,
 		file.Size,
@@ -47,7 +44,6 @@ func UploadToMinio(
 			ContentType: file.Header.Get("Content-Type"),
 		},
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -55,20 +51,15 @@ func UploadToMinio(
 	return objectName, nil
 }
 
-// ========================
-// Delete
-// ========================
-
-func DeleteFromMinio(
+func DeleteFromStorage(
 	ctx context.Context,
-	client *minio.Client,
-	bucket string,
+	storage *database.Storage,
 	object string,
 ) error {
 
-	return client.RemoveObject(
+	return storage.Client.RemoveObject(
 		ctx,
-		bucket,
+		storage.Bucket,
 		object,
 		minio.RemoveObjectOptions{},
 	)
