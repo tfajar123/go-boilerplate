@@ -2,8 +2,8 @@ package authController
 
 import (
 	authService "go-boilerplate/apps/internal/features/auth/services"
+	authValidation "go-boilerplate/apps/internal/features/auth/validation"
 	"go-boilerplate/apps/internal/utils"
-	"go-boilerplate/ent/user"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -16,35 +16,23 @@ func NewAuthHandler(authService *authService.AuthService) *AuthController {
 	return &AuthController{authService: authService}
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RegisterRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
-}
-
-/* =========================
-   LOGIN
-========================= */
-
 func (h *AuthController) Login(c *fiber.Ctx) error {
-	var req LoginRequest
+	var req authValidation.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid")
+		return utils.BadRequest(c, "request body tidak valid", err.Error())
 	}
 
 	userData, accessToken, refreshToken, err := h.authService.Login(
 		c.Context(),
-		req.Email,
-		req.Password,
+		req,
 	)
 	if err != nil {
-		return utils.Unauthorized(c, err.Error())
+
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "validasi gagal", validationErrs)
+		}
+
+		return utils.Unauthorized(c, "login gagal", err.Error())
 	}
 
 	return utils.Ok(c, "login berhasil", fiber.Map{
@@ -54,25 +42,24 @@ func (h *AuthController) Login(c *fiber.Ctx) error {
 	})
 }
 
-/* =========================
-   REGISTER
-========================= */
-
 func (h *AuthController) Register(c *fiber.Ctx) error {
-	var req RegisterRequest
+	var req authValidation.RegisterRequest
 
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid")
+		return utils.BadRequest(c, "request body tidak valid", err.Error())
 	}
 
-	if err := h.authService.Register(
+	err := h.authService.Register(
 		c.Context(),
-		req.Name,
-		req.Email,
-		req.Password,
-		user.Role(req.Role),
-	); err != nil {
-		return utils.BadRequest(c, err.Error())
+		req,
+	)
+	if err != nil {
+
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "validasi gagal", validationErrs)
+		}
+
+		return utils.BadRequest(c, "registrasi gagal", err.Error())
 	}
 
 	return utils.Created(c, "registrasi berhasil", nil)
@@ -89,7 +76,7 @@ func (h *AuthController) Refresh(c *fiber.Ctx) error {
 
 	var req Req
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid")
+		return utils.BadRequest(c, "request body tidak valid", err.Error())
 	}
 
 	accessToken, refreshToken, err := h.authService.RefreshToken(
@@ -97,7 +84,7 @@ func (h *AuthController) Refresh(c *fiber.Ctx) error {
 		req.RefreshToken,
 	)
 	if err != nil {
-		return utils.Unauthorized(c, err.Error())
+		return utils.Unauthorized(c, "token tidak valid", err.Error())
 	}
 
 	return utils.Ok(c, "token diperbarui", fiber.Map{
@@ -119,7 +106,7 @@ func (h *AuthController) Logout(c *fiber.Ctx) error {
 		userID,
 		sessionID,
 	); err != nil {
-		return utils.Unauthorized(c, err.Error())
+		return utils.Unauthorized(c, "logout gagal", err.Error())
 	}
 
 	return utils.Ok(c, "logout berhasil", nil)

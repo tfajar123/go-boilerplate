@@ -28,10 +28,11 @@ func Success(c *fiber.Ctx, status int, message string, data any) error {
 
 }
 
-func Error(c *fiber.Ctx, status int, message string) error  {
+func Error(c *fiber.Ctx, status int, message string, err any) error {
 	resp := ErrorResponse{
 		Status:  status,
 		Message: message,
+		Error:   err,
 	}
 	return c.Status(status).JSON(resp)
 
@@ -50,18 +51,18 @@ func NoContent(c *fiber.Ctx) error {
 	return Success(c, http.StatusNoContent, "", nil)
 }
 
-func NotFound(c *fiber.Ctx, message string) error {
-	return Error(c, http.StatusNotFound, message)
+func NotFound(c *fiber.Ctx, message string, err any) error {
+	return Error(c, http.StatusNotFound, message, err)
 }
 
-func BadRequest(c *fiber.Ctx, message string) error {
-	return Error(c, http.StatusBadRequest, message)
+func BadRequest(c *fiber.Ctx, message string, err any) error {
+	return Error(c, http.StatusBadRequest, message, err)
 }
 
-func InternalError(c *fiber.Ctx, message string) error {
-	return Error(c, http.StatusInternalServerError, message)
+func InternalError(c *fiber.Ctx, message string, err any) error {
+	return Error(c, http.StatusInternalServerError, message, err)
 }
 
-func Unauthorized(c *fiber.Ctx, message string) error {
-	return Error(c, http.StatusUnauthorized, message)
+func Unauthorized(c *fiber.Ctx, message string, err any) error {
+	return Error(c, http.StatusUnauthorized, message, err)
 }

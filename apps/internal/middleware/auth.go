@@ -14,17 +14,17 @@ func AuthRequired(redis *redis.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			return utils.Unauthorized(c, "authorization header tidak ada")
+			return utils.Unauthorized(c, "authorization header tidak ada", nil)
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return utils.Unauthorized(c, "format token tidak valid")
+			return utils.Unauthorized(c, "format token tidak valid", nil)
 		}
 
 		claims, err := utils.ParseAccessToken(parts[1])
 		if err != nil {
-			return utils.Unauthorized(c, err.Error())
+			return utils.Unauthorized(c, "Token tidak valid", err.Error())
 		}
 
 		userID := claims["sub"].(string)
@@ -36,7 +36,7 @@ func AuthRequired(redis *redis.Client) fiber.Handler {
 		key := "auth:session:" + userID
 		storedSID, err := redis.Get(c.Context(), key).Result()
 		if err != nil || storedSID != sessionID {
-			return utils.Unauthorized(c, "session sudah logout")
+			return utils.Unauthorized(c, "session sudah logout", err.Error())
 		}
 
 		c.Locals("user_id", userID)
