@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: go-api-staging
+    restart: unless-stopped
+    environment:
+      # Staging environment variables
+      - APP_ENV=staging
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+    networks:
+      - traefik
+
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api-boilerplate.rule=Host(`api-boilerplate.yourwebsite.com`)'
+      - 'traefik.http.routers.api-boilerplate.entrypoints=websecure'
+      - 'traefik.http.services.api-boilerplate.loadbalancer.server.port=3098'
+      - 'traefik.http.routers.api-boilerplate.tls.certresolver=letsencryptresolver'
+
+networks:
+  traefik:
+    external: true

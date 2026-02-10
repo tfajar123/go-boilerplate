@@ -49,3 +49,8 @@ func InitLogger() {
 func SyncLogger() {
 	_ = Logger.Sync()
 }
+
+// IsDevelopment returns true if the application is running in development mode
+func IsDevelopment() bool {
+	return os.Getenv("APP_ENV") != "production"
+}
