@@ -86,6 +86,26 @@ func (_u *UserUpdate) SetNillableRole(v *user.Role) *UserUpdate {
 	return _u
 }
 
+// SetProfileImage sets the "profileImage" field.
+func (_u *UserUpdate) SetProfileImage(v string) *UserUpdate {
+	_u.mutation.SetProfileImage(v)
+	return _u
+}
+
+// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableProfileImage(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetProfileImage(*v)
+	}
+	return _u
+}
+
+// ClearProfileImage clears the value of the "profileImage" field.
+func (_u *UserUpdate) ClearProfileImage() *UserUpdate {
+	_u.mutation.ClearProfileImage()
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *UserUpdate) SetCreatedAt(v time.Time) *UserUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -216,6 +236,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.ProfileImage(); ok {
+		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
+	}
+	if _u.mutation.ProfileImageCleared() {
+		_spec.ClearField(user.FieldProfileImage, field.TypeString)
+	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 	}
@@ -340,6 +366,26 @@ func (_u *UserUpdateOne) SetNillableRole(v *user.Role) *UserUpdateOne {
 	if v != nil {
 		_u.SetRole(*v)
 	}
+	return _u
+}
+
+// SetProfileImage sets the "profileImage" field.
+func (_u *UserUpdateOne) SetProfileImage(v string) *UserUpdateOne {
+	_u.mutation.SetProfileImage(v)
+	return _u
+}
+
+// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableProfileImage(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetProfileImage(*v)
+	}
+	return _u
+}
+
+// ClearProfileImage clears the value of the "profileImage" field.
+func (_u *UserUpdateOne) ClearProfileImage() *UserUpdateOne {
+	_u.mutation.ClearProfileImage()
 	return _u
 }
 
@@ -502,6 +548,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.ProfileImage(); ok {
+		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
+	}
+	if _u.mutation.ProfileImageCleared() {
+		_spec.ClearField(user.FieldProfileImage, field.TypeString)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

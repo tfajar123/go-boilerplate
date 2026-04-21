@@ -71,6 +71,11 @@ func Password(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPassword, v))
 }
 
+// ProfileImage applies equality check predicate on the "profileImage" field. It's identical to ProfileImageEQ.
+func ProfileImage(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldProfileImage, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -294,6 +299,81 @@ func RoleIn(vs ...Role) predicate.User {
 // RoleNotIn applies the NotIn predicate on the "role" field.
 func RoleNotIn(vs ...Role) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldRole, vs...))
+}
+
+// ProfileImageEQ applies the EQ predicate on the "profileImage" field.
+func ProfileImageEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldProfileImage, v))
+}
+
+// ProfileImageNEQ applies the NEQ predicate on the "profileImage" field.
+func ProfileImageNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldProfileImage, v))
+}
+
+// ProfileImageIn applies the In predicate on the "profileImage" field.
+func ProfileImageIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldProfileImage, vs...))
+}
+
+// ProfileImageNotIn applies the NotIn predicate on the "profileImage" field.
+func ProfileImageNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldProfileImage, vs...))
+}
+
+// ProfileImageGT applies the GT predicate on the "profileImage" field.
+func ProfileImageGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldProfileImage, v))
+}
+
+// ProfileImageGTE applies the GTE predicate on the "profileImage" field.
+func ProfileImageGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldProfileImage, v))
+}
+
+// ProfileImageLT applies the LT predicate on the "profileImage" field.
+func ProfileImageLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldProfileImage, v))
+}
+
+// ProfileImageLTE applies the LTE predicate on the "profileImage" field.
+func ProfileImageLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldProfileImage, v))
+}
+
+// ProfileImageContains applies the Contains predicate on the "profileImage" field.
+func ProfileImageContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldProfileImage, v))
+}
+
+// ProfileImageHasPrefix applies the HasPrefix predicate on the "profileImage" field.
+func ProfileImageHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldProfileImage, v))
+}
+
+// ProfileImageHasSuffix applies the HasSuffix predicate on the "profileImage" field.
+func ProfileImageHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldProfileImage, v))
+}
+
+// ProfileImageIsNil applies the IsNil predicate on the "profileImage" field.
+func ProfileImageIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldProfileImage))
+}
+
+// ProfileImageNotNil applies the NotNil predicate on the "profileImage" field.
+func ProfileImageNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldProfileImage))
+}
+
+// ProfileImageEqualFold applies the EqualFold predicate on the "profileImage" field.
+func ProfileImageEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldProfileImage, v))
+}
+
+// ProfileImageContainsFold applies the ContainsFold predicate on the "profileImage" field.
+func ProfileImageContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldProfileImage, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

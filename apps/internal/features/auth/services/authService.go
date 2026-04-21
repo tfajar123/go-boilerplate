@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"go-boilerplate/apps/internal/database"
+	dto "go-boilerplate/apps/internal/features/auth/dto"
 	authValidation "go-boilerplate/apps/internal/features/auth/validation"
+	storageService "go-boilerplate/apps/internal/features/storage/services"
 	"go-boilerplate/apps/internal/utils"
 	"go-boilerplate/ent"
 	"go-boilerplate/ent/user"
@@ -16,14 +18,20 @@ import (
 )
 
 type AuthService struct {
-	client *ent.Client
-	redis  *redis.Client
+	client  *ent.Client
+	redis   *redis.Client
+	storage *storageService.StorageService
 }
 
-func NewAuthService(client *ent.Client, redis *redis.Client) *AuthService {
+func NewAuthService(
+	client *ent.Client,
+	redis *redis.Client,
+	storage *storageService.StorageService,
+) *AuthService {
 	return &AuthService{
-		client: client,
-		redis:  redis,
+		client:  client,
+		redis:   redis,
+		storage: storage,
 	}
 }
 
@@ -35,17 +43,17 @@ const (
 func (s *AuthService) Login(
 	ctx context.Context,
 	req authValidation.LoginRequest,
-) (*ent.User, string, string, error) {
+) (*dto.LoginResponse, error) {
 
 	if err := authValidation.ValidateAuth(req); err != nil {
-		return nil, "", "", err
+		return nil, err
 	}
 
 	failKey := "auth:login_fail:" + req.Email
 
 	failCount, _ := s.redis.Get(ctx, failKey).Int()
 	if failCount >= maxLoginAttempt {
-		return nil, "", "", errors.New("terlalu banyak percobaan login, coba lagi nanti")
+		return nil, errors.New("Too many requests, please try again later")
 	}
 
 	u, err := s.client.User.
@@ -55,12 +63,12 @@ func (s *AuthService) Login(
 
 	if err != nil {
 		s.incrLoginFail(ctx, failKey)
-		return nil, "", "", errors.New("email atau password salah")
+		return nil, errors.New("Email or Password is incorrect")
 	}
 
 	if !utils.VerifyPassword(u.Password, req.Password) {
 		s.incrLoginFail(ctx, failKey)
-		return nil, "", "", errors.New("email atau password salah")
+		return nil, errors.New("Email or Password is incorrect")
 	}
 
 	s.redis.Del(ctx, failKey)
@@ -69,14 +77,29 @@ func (s *AuthService) Login(
 
 	err = s.SaveSession(ctx, u.ID.String(), sid, 7*24*time.Hour)
 	if err != nil {
-		return nil, "", "", err
+		return nil, err
 	}
 	u.Password = ""
 
 	accessToken, _ := utils.GenerateAccessToken(u.ID.String(), u.Email, sid)
 	refreshToken, _ := utils.GenerateRefreshToken(u.ID.String(), u.Email, sid)
 
-	return u, accessToken, refreshToken, nil
+	userResponse := dto.UserResponse{
+		ID:        u.ID,
+		Name:      u.Name,
+		Email:     u.Email,
+		Role:      u.Role.String(),
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+	}
+
+	loginResponse := dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         userResponse,
+	}
+
+	return &loginResponse, nil
 }
 
 func (s *AuthService) Register(
@@ -98,7 +121,7 @@ func (s *AuthService) Register(
 	}
 
 	if exists {
-		return errors.New("email sudah terdaftar")
+		return errors.New("Email already exists")
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
@@ -106,13 +129,30 @@ func (s *AuthService) Register(
 		return err
 	}
 
-	_, err = s.client.User.
+	// Skip upload jika image kosong
+	var profileImage string
+	if req.Image != "" {
+
+		image, err := s.storage.UploadBase64(ctx, req.Image, "profiles")
+		if err != nil {
+			return fmt.Errorf("failed to upload profile image: %w", err)
+		}
+		profileImage = image
+	}
+
+	userCreate := s.client.User.
 		Create().
 		SetName(req.Name).
 		SetEmail(req.Email).
 		SetPassword(string(hashedPassword)).
-		SetRole(req.Role).
-		Save(ctx)
+		SetRole(req.Role)
+
+	// Ent otomatis generate method camelCase sesuai nama field: profileImage -> SetProfileImage
+	if profileImage != "" {
+		userCreate.SetProfileImage(profileImage)
+	}
+
+	_, err = userCreate.Save(ctx)
 
 	return err
 }
@@ -134,11 +174,11 @@ func (s *AuthService) incrLoginFail(
 func (s *AuthService) RefreshToken(
 	ctx context.Context,
 	refreshToken string,
-) (string, string, error) {
+) (*dto.RefreshTokenResponse, error) {
 
 	claims, err := utils.ParseRefreshToken(refreshToken)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	userID := claims["sub"].(string)
@@ -148,20 +188,25 @@ func (s *AuthService) RefreshToken(
 
 	storedSID, err := s.redis.Get(ctx, key).Result()
 	if err != nil || storedSID != oldSID {
-		return "", "", errors.New("session tidak valid")
+		return nil, errors.New("Invalid Session ID")
 	}
 
 	newSID := utils.NewSessionID()
 
 	err = s.SaveSession(ctx, userID, newSID, 7*24*time.Hour)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	accessToken, _ := utils.GenerateAccessToken(userID, claims["email"].(string), newSID)
 	refreshTokenNew, _ := utils.GenerateRefreshToken(userID, claims["email"].(string), newSID)
 
-	return accessToken, refreshTokenNew, nil
+	response := dto.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshTokenNew,
+	}
+
+	return &response, nil
 }
 
 func (s *AuthService) Logout(
@@ -174,14 +219,14 @@ func (s *AuthService) Logout(
 
 	storedSID, err := s.redis.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return errors.New("sudah logout")
+		return errors.New("Logged out")
 	}
 	if err != nil {
 		return err
 	}
 
 	if storedSID != sessionID {
-		return errors.New("session tidak valid")
+		return errors.New("Invalid Session ID")
 	}
 
 	return s.redis.Del(ctx, key).Err()

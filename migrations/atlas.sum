@@ -1,5 +1,6 @@
-h1:1qyj4o9temoJLuO/4s44xktlvB8nfV26DFu9vyodkuM=
+h1:9UsdcUxPUTWnNWA2ayLO1pGnTqrY8dcA7i8Oc0yclzc=
 20260121022732_init.sql h1:RxhhtY+iZM2RIvxFJrvJmkaLCVEJ34P57A/B4WfTvJc=
 20260130073515_init.sql h1:TNfoxLdkJkTpO4h6yDRfdWJ2HIO9YER9GHoXuT/sKeg=
 20260204042338_add_profiles_table.sql h1:1NJ0WUxE6+gxE4HwvaltVcRnXdCFN2LkZjhg06qsdT0=
 20260204042459_alter_profiles_table.sql h1:oXsLRRJy0nF+aQ+mmktD0YZo/NL2nHwOA7jEzx91MtM=
+20260421060208_add_profile_image.sql h1:SqcAaU1c1EQHBO75DS/EQFuRMTgVACJ7Aoazld/1cuU=

@@ -54,6 +54,20 @@ func (_c *UserCreate) SetNillableRole(v *user.Role) *UserCreate {
 	return _c
 }
 
+// SetProfileImage sets the "profileImage" field.
+func (_c *UserCreate) SetProfileImage(v string) *UserCreate {
+	_c.mutation.SetProfileImage(v)
+	return _c
+}
+
+// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
+func (_c *UserCreate) SetNillableProfileImage(v *string) *UserCreate {
+	if v != nil {
+		_c.SetProfileImage(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UserCreate) SetCreatedAt(v time.Time) *UserCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -239,6 +253,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
+	}
+	if value, ok := _c.mutation.ProfileImage(); ok {
+		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
+		_node.ProfileImage = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

@@ -20,7 +20,7 @@ func Register(app *fiber.App, client *ent.Client, storage *database.Storage) {
 	api := app.Group("/api/v1")
 	api.Use(middlewares.RateLimiter(100, time.Minute))
 
-	registerAuthRoutes(api, client)
+	registerAuthRoutes(api, client, storage)
 	registerExRoutes(api, client)
 
 }
