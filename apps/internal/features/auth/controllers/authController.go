@@ -19,34 +19,30 @@ func NewAuthHandler(authService *authService.AuthService) *AuthController {
 func (h *AuthController) Login(c *fiber.Ctx) error {
 	var req authValidation.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid", err.Error())
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
 	}
 
-	userData, accessToken, refreshToken, err := h.authService.Login(
+	userData, err := h.authService.Login(
 		c.Context(),
 		req,
 	)
 	if err != nil {
 
 		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
-			return utils.BadRequest(c, "validasi gagal", validationErrs)
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
 		}
 
-		return utils.Unauthorized(c, "login gagal", err.Error())
+		return utils.Unauthorized(c, "Login Failed", err.Error())
 	}
 
-	return utils.Ok(c, "login berhasil", fiber.Map{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-		"user":          userData,
-	})
+	return utils.Ok(c, "Login Success", userData)
 }
 
 func (h *AuthController) Register(c *fiber.Ctx) error {
 	var req authValidation.RegisterRequest
 
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid", err.Error())
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
 	}
 
 	err := h.authService.Register(
@@ -56,13 +52,13 @@ func (h *AuthController) Register(c *fiber.Ctx) error {
 	if err != nil {
 
 		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
-			return utils.BadRequest(c, "validasi gagal", validationErrs)
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
 		}
 
-		return utils.BadRequest(c, "registrasi gagal", err.Error())
+		return utils.BadRequest(c, "Registration Failed", err.Error())
 	}
 
-	return utils.Created(c, "registrasi berhasil", nil)
+	return utils.Created(c, "Registration Success", nil)
 }
 
 /* =========================
@@ -76,21 +72,18 @@ func (h *AuthController) Refresh(c *fiber.Ctx) error {
 
 	var req Req
 	if err := c.BodyParser(&req); err != nil {
-		return utils.BadRequest(c, "request body tidak valid", err.Error())
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
 	}
 
-	accessToken, refreshToken, err := h.authService.RefreshToken(
+	refreshToken, err := h.authService.RefreshToken(
 		c.Context(),
 		req.RefreshToken,
 	)
 	if err != nil {
-		return utils.Unauthorized(c, "token tidak valid", err.Error())
+		return utils.Unauthorized(c, "Invalid Token", err.Error())
 	}
 
-	return utils.Ok(c, "token diperbarui", fiber.Map{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-	})
+	return utils.Ok(c, "Token Refreshed", refreshToken)
 }
 
 /* =========================
@@ -106,8 +99,8 @@ func (h *AuthController) Logout(c *fiber.Ctx) error {
 		userID,
 		sessionID,
 	); err != nil {
-		return utils.Unauthorized(c, "logout gagal", err.Error())
+		return utils.Unauthorized(c, "Invalid Token", err.Error())
 	}
 
-	return utils.Ok(c, "logout berhasil", nil)
+	return utils.Ok(c, "Logout Success", nil)
 }

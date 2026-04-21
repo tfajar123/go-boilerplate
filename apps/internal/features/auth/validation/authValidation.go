@@ -20,6 +20,7 @@ type RegisterRequest struct {
 	Email    string    `validate:"required,email"`
 	Password string    `validate:"required,min=8,max=72"`
 	Role     user.Role `validate:"required,oneof=admin user"`
+	Image    string    `validate:"omitempty"`
 }
 
 func ValidateAuth(s any) error {
@@ -40,22 +41,25 @@ func FormatValidationError(err error) map[string]string {
 		switch e.Tag() {
 
 		case "required":
-			errors[field] = "wajib diisi"
+			errors[field] = "required"
 
 		case "email":
-			errors[field] = "format email tidak valid"
+			errors[field] = "invalid email"
 
 		case "min":
-			errors[field] = fmt.Sprintf("minimal %s karakter", e.Param())
+			errors[field] = fmt.Sprintf("minimal %s characters", e.Param())
 
 		case "max":
-			errors[field] = fmt.Sprintf("maksimal %s karakter", e.Param())
+			errors[field] = fmt.Sprintf("maximal %s characters", e.Param())
 
 		case "oneof":
-			errors[field] = "nilai tidak valid"
+			errors[field] = "invalid role"
+
+		case "base64":
+			errors[field] = "image must be base64"
 
 		default:
-			errors[field] = "tidak valid"
+			errors[field] = "invalid"
 		}
 	}
 

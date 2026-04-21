@@ -4,6 +4,7 @@ import (
 	"go-boilerplate/apps/internal/database"
 	authController "go-boilerplate/apps/internal/features/auth/controllers"
 	authService "go-boilerplate/apps/internal/features/auth/services"
+	storageService "go-boilerplate/apps/internal/features/storage/services"
 	middlewares "go-boilerplate/apps/internal/middleware"
 	"go-boilerplate/ent"
 	"time"
@@ -11,8 +12,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func registerAuthRoutes(api fiber.Router, client *ent.Client) {
-	authSvc := authService.NewAuthService(client, database.Redis)
+func registerAuthRoutes(api fiber.Router, client *ent.Client, storage *database.Storage) {
+	storageSvc := storageService.NewStorageService(storage)
+	authSvc := authService.NewAuthService(client, database.Redis, storageSvc)
 	authCont := authController.NewAuthHandler(authSvc)
 	redisClient := database.Redis
 
