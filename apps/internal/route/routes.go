@@ -21,6 +21,7 @@ func Register(app *fiber.App, client *ent.Client, storage *database.Storage) {
 	api.Use(middlewares.RateLimiter(100, time.Minute))
 
 	registerAuthRoutes(api, client, storage)
+	registerProfileRoutes(api, client, storage)
 	registerExRoutes(api, client)
 
 }

@@ -24,6 +24,7 @@ type StorageConfig struct {
 	SecretKey string
 	Bucket    string
 	UseSSL    bool
+	PublicURL string
 }
 
 type Config struct {
@@ -61,6 +62,7 @@ func Load() *Config {
 			SecretKey: os.Getenv("STORAGE_SECRET_KEY"),
 			Bucket:    os.Getenv("STORAGE_BUCKET"),
 			UseSSL:    os.Getenv("STORAGE_USE_SSL") == "true",
+			PublicURL: os.Getenv("STORAGE_PUBLIC_URL"),
 		},
 	}
 
