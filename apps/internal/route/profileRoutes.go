@@ -18,4 +18,5 @@ func registerProfileRoutes(api fiber.Router, client *ent.Client, storage *databa
 	redisClient := database.Redis
 
 	api.Get("/profiles", middlewares.AuthRequired(redisClient), profileCont.GetProfile)
+	api.Put("/profiles/image", middlewares.AuthRequired(redisClient), profileCont.UpdateImageUrl)
 }

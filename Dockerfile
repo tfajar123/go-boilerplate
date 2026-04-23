@@ -21,9 +21,6 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Generate ent code
-RUN go generate ./ent
-
 # Build the application with optimizations
 RUN go build -ldflags='-w -s' -o app ./apps/cmd/server
 
@@ -42,9 +39,10 @@ ENV TZ=Asia/Jakarta
 
 WORKDIR /app
 
-# Copy the binary and migrations
+# Copy the binary, migrations and necessary files
 COPY --from=builder /app/app .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/.env.example .
 
 # Create non-root user for security
 RUN adduser -D -g '' appuser && \
