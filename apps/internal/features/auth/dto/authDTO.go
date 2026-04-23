@@ -53,3 +53,12 @@ type RefreshTokenResponse struct {
 type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
+
+type ForgotPasswordResponse struct {
+	EmailSent bool      `json:"email_sent"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type ResetPasswordResponse struct {
+	ResetAt time.Time `json:"reset_at"`
+}

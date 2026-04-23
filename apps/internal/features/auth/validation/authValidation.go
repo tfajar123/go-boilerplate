@@ -3,7 +3,6 @@ package authValidation
 import (
 	"fmt"
 	"go-boilerplate/ent/user"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -23,6 +22,16 @@ type RegisterRequest struct {
 	Image    string    `validate:"omitempty"`
 }
 
+type ForgotPasswordRequest struct {
+	Email string `validate:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Token           string `validate:"required"`
+	NewPassword     string `validate:"required,min=8,max=72"`
+	ConfirmPassword string `validate:"required,eqfield=NewPassword"`
+}
+
 func ValidateAuth(s any) error {
 	return validate.Struct(s)
 }
@@ -36,7 +45,7 @@ func FormatValidationError(err error) map[string]string {
 	}
 
 	for _, e := range ve {
-		field := strings.ToLower(e.Field())
+		field := toSnakeCase(e.Field())
 
 		switch e.Tag() {
 
@@ -58,10 +67,32 @@ func FormatValidationError(err error) map[string]string {
 		case "base64":
 			errors[field] = "image must be base64"
 
+		case "eqfield":
+			errors[field] = "password confirmation does not match"
+
 		default:
 			errors[field] = "invalid"
 		}
 	}
 
 	return errors
+}
+
+func toSnakeCase(value string) string {
+	if value == "" {
+		return value
+	}
+
+	var result []rune
+	for i, r := range value {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '_')
+		}
+		if r >= 'A' && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+		result = append(result, r)
+	}
+
+	return string(result)
 }
