@@ -37,7 +37,7 @@ func GenerateAccessToken(
 		"email": email,
 		"sid":   sessionID,
 		"type":  "access",
-		"exp":   time.Now().Add(15 * time.Minute).Unix(),
+		"exp":   time.Now().Add(24 * time.Hour).Unix(),
 		"iat":   time.Now().Unix(),
 	}
 

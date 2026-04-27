@@ -61,6 +61,42 @@ func (h *AuthController) Register(c *fiber.Ctx) error {
 	return utils.Created(c, "Registration Success", nil)
 }
 
+func (h *AuthController) ForgotPassword(c *fiber.Ctx) error {
+	var req authValidation.ForgotPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
+	}
+
+	result, err := h.authService.ForgotPassword(c.Context(), req)
+	if err != nil {
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
+		}
+
+		return utils.BadRequest(c, "Forgot Password Failed", err.Error())
+	}
+
+	return utils.Ok(c, "Forgot Password Success", result)
+}
+
+func (h *AuthController) ResetPassword(c *fiber.Ctx) error {
+	var req authValidation.ResetPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
+	}
+
+	result, err := h.authService.ResetPassword(c.Context(), req)
+	if err != nil {
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
+		}
+
+		return utils.BadRequest(c, "Reset Password Failed", err.Error())
+	}
+
+	return utils.Ok(c, "Reset Password Success", result)
+}
+
 /* =========================
    REFRESH TOKEN
 ========================= */

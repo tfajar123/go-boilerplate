@@ -1,53 +1,180 @@
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/golang-migrate/migrate/ci.yaml?branch=master)](https://github.com/golang-migrate/migrate/actions/workflows/ci.yaml?query=branch%3Amaster)
-[![GoDoc](https://pkg.go.dev/badge/github.com/golang-migrate/migrate)](https://pkg.go.dev/github.com/golang-migrate/migrate/v4)
-[![Coverage Status](https://img.shields.io/coveralls/github/golang-migrate/migrate/master.svg)](https://coveralls.io/github/golang-migrate/migrate?branch=master)
-[![packagecloud.io](https://img.shields.io/badge/deb-packagecloud.io-844fec.svg)](https://packagecloud.io/golang-migrate/migrate?filter=debs)
-[![Docker Pulls](https://img.shields.io/docker/pulls/migrate/migrate.svg)](https://hub.docker.com/r/migrate/migrate/)
-![Supported Go Versions](https://img.shields.io/badge/Go-1.24%2C%201.25-lightgrey.svg)
-[![GitHub Release](https://img.shields.io/github/release/golang-migrate/migrate.svg)](https://github.com/golang-migrate/migrate/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/golang-migrate/migrate/v4)](https://goreportcard.com/report/github.com/golang-migrate/migrate/v4)
+# Golang Fiber Boilerplate
 
-# # Golang Fiber Boilerplate
+Production ready backend boilerplate built with Go Fiber, Ent ORM, PostgreSQL, Redis, and Atlas Migration. Includes complete authentication system, user profile, and common middleware to accelerate your project development.
 
-This project using Go Fiber, Ent ORM, Postgres, Air, and atlasgo for development, so make sure to install it first. This boilerplate also have auth service and controller for fast development.
+![Go Version](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go)
+![Fiber](https://img.shields.io/badge/Fiber-v2.x-00ADD8?logo=fiber)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-336791?logo=postgresql)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-## Installation
+## ✨ Available Features
 
-Make sure you have golang installed in your machine and set the environment based on you systems. Then run this installation in your terminal :
+- ✅ JWT Authentication (Register, Login, Logout)
+- ✅ User Profile Management
+- ✅ Authentication Middleware
+- ✅ Standardized Error Handler
+- ✅ Rate Limiter
+- ✅ Request Logger
+- ✅ Ent ORM Database Layer
+- ✅ Atlas Database Migration
+- ✅ Hot Reload with Air
+- ✅ Redis for Session & Cache
+- ✅ AWS S3 Storage Integration
+- ✅ Mailer Service
+- ✅ Well Organized Folder Structure
+
+---
+
+## 📋 System Requirements
+
+Make sure you have these installed on your system:
+
+- Go 1.24 or newer
+- PostgreSQL 15+
+- Redis 7+
+- Docker (optional but recommended)
+
+---
+
+## 🚀 Installation
+
+1.  Clone the repository:
+
+    ```bash
+    git clone https://github.com/tfajar123/go-boilerplate.git
+    cd go-boilerplate
+    ```
+
+2.  Install Go dependencies:
+
+    ```bash
+    go mod download
+    go mod tidy
+    ```
+
+3.  Copy environment configuration file:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+4.  Edit `.env` file and adjust database, redis and other configurations accordingly.
+
+5.  Install required development tools:
+
+    ```bash
+    # Install Atlas for database migration
+    curl -sSf https://atlasgo.sh | sh
+
+    # Install Air for hot reload
+    go install github.com/air-verse/air@latest
+    ```
+
+---
+
+## ⚡ Running The Application
+
+For development with hot reload:
 
 ```bash
-git clone https://github.com/tfajar123/go-boilerplate.git
-cd go-boilerplate
-go mod download
-go mod tidy
-cp .env.example .env
-curl -sSf https://atlasgo.sh | sh //skip this if you already have installed atlas
-go install github.com/air-verse/air@latest
+air
 ```
 
-## Usage
+Application will run on `http://localhost:3000` by default.
 
-To run this app, you only have to run `air` in the command prompt or terminal. If you want to make a migration, you must install `atlas` first, so we recommend you to use linux environment to run this app. This boilerplate use schema first for migration, so you must put your schema at `./ent/schema/yourschema.go` Thus you can run this prompt for migration :
+---
+
+## 🛠️ Makefile Usage
+
+This project includes `Makefile` to simplify running common commands. All commands are executed using `make <command_name>` format.
+
+| Command                                 | Description                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| `make help`                             | Display all available commands                                            |
+| `make setup`                            | First time project setup (generate ent, hash migration, apply migrations) |
+| `make gen`                              | Regenerate Ent ORM client after schema changes                            |
+| `make migrate-hash`                     | Generate integrity hash for migration files                               |
+| `make migrate-diff name=migration_name` | Create new migration file based on schema changes                         |
+| `make migrate-apply`                    | Run all pending migrations                                                |
+| `make migrate-local`                    | Apply migrations to local environment                                     |
+| `make migrate-staging`                  | Apply migrations to staging environment                                   |
+| `make migrate-prod`                     | Apply migrations to production environment                                |
+
+### Makefile Workflow Example:
 
 ```bash
-set -a
-source .env
-set +a
+# After modifying schema in ent/schema/
+make gen
 
-go generate ./ent
-atlas migrate diff init --env local
-atlas migrate apply --env local
+# Create migration file
+make migrate-diff name=add_address_column
+
+# Execute migration
+make migrate-apply
 ```
 
-You can change env based on atlas.hcl, for example `--env staging` if you want apply migration to staging, just make sure to set it up on `atlas.hcl` file.
+> 💡 Tip: Use `make setup` when first setting up the project, this will automatically run all required steps for you.
 
-## Contributing
+---
 
-For major changes, please open an issue first
-to discuss what you would like to change.
+## 📖 Migration Guide
 
-Please make sure to update tests as appropriate.
+This project uses **Schema First** approach:
 
-## License
+1.  Edit or add schema files in `./ent/schema/` directory
+2.  Generate Ent client: `make gen`
+3.  Create migration: `make migrate-diff name=change_description`
+4.  Review generated migration file in `./migrations/` folder
+5.  Run migration: `make migrate-apply`
 
-[MIT](https://choosealicense.com/licenses/mit/)
+For other environments use:
+
+```bash
+make migrate-staging
+make migrate-prod
+```
+
+---
+
+## 📂 Folder Structure
+
+```
+go-boilerplate/
+├── apps/
+│   ├── cmd/server/          # Application entry point
+│   └── internal/
+│       ├── config/          # Environment config loader
+│       ├── database/        # Database & Redis connection
+│       ├── features/        # Application features (modular)
+│       ├── middleware/      # Global middleware
+│       ├── route/           # Routing definitions
+│       └── utils/           # Helpers & common functions
+├── ent/                     # Ent ORM schema & generated code
+├── migrations/              # SQL Migration files
+├── .env.example             # Example environment configuration
+├── makefile                 # Make commands
+├── atlas.hcl                # Atlas migration configuration
+└── docker-compose.yml       # Development docker stack
+```
+
+---
+
+## 🐳 Using Docker
+
+To run all services (PostgreSQL, Redis, App) with single command:
+
+```bash
+docker compose up -d
+```
+
+---
+
+## 🤝 Contributing
+
+For major changes, please open an issue first to discuss what you would like to change. Always make sure to update tests as appropriate.
+
+---
+
+## 📄 License
+
+This project is licensed under **MIT** License. See [LICENSE](LICENSE) file for full details.

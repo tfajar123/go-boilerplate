@@ -24,6 +24,17 @@ type StorageConfig struct {
 	SecretKey string
 	Bucket    string
 	UseSSL    bool
+	PublicURL string
+}
+
+type MailConfig struct {
+	Host             string
+	Port             int
+	Username         string
+	Password         string
+	FromEmail        string
+	FromName         string
+	ResetPasswordURL string
 }
 
 type Config struct {
@@ -32,6 +43,7 @@ type Config struct {
 	Port    string
 	Redis   RedisConfig
 	Storage StorageConfig
+	Mail    MailConfig
 }
 
 func Load() *Config {
@@ -39,6 +51,7 @@ func Load() *Config {
 
 	redisPort, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
 	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
+	mailPort, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
 
 	cfg := &Config{
 		AppEnv: os.Getenv("APP_ENV"),
@@ -61,6 +74,17 @@ func Load() *Config {
 			SecretKey: os.Getenv("STORAGE_SECRET_KEY"),
 			Bucket:    os.Getenv("STORAGE_BUCKET"),
 			UseSSL:    os.Getenv("STORAGE_USE_SSL") == "true",
+			PublicURL: os.Getenv("STORAGE_PUBLIC_URL"),
+		},
+
+		Mail: MailConfig{
+			Host:             os.Getenv("MAIL_HOST"),
+			Port:             mailPort,
+			Username:         os.Getenv("MAIL_USERNAME"),
+			Password:         os.Getenv("MAIL_PASSWORD"),
+			FromEmail:        os.Getenv("MAIL_FROM_EMAIL"),
+			FromName:         os.Getenv("MAIL_FROM_NAME"),
+			ResetPasswordURL: os.Getenv("MAIL_RESET_PASSWORD_URL"),
 		},
 	}
 
