@@ -1,20 +1,47 @@
 version: '3.9'
 
 services:
-  api:
+  go-boilerplate:
     build: .
-    container_name: go-api-staging
+    container_name: go-boilerplate-staging
     restart: unless-stopped
+    ports:
+      - '${APP_PORT}:${APP_PORT}'
+    env_file:
+      - .env
     environment:
-      # Staging environment variables
-      - APP_ENV=staging
+      # Production environment variables
+      - APP_ENV=production
+      - APP_PORT=${APP_PORT}
       - DATABASE_URL=${DATABASE_URL}
+
+      - LOCAL_DB=${LOCAL_DB}
+      - LOCAL_DEV_DB=${LOCAL_DEV_DB}
+
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
+      - REDIS_USERNAME=${REDIS_USERNAME}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - REDIS_TLS=${REDIS_TLS}
+
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT}
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY}
+      - STORAGE_BUCKET=${STORAGE_BUCKET}
+      - STORAGE_USE_SSL=${STORAGE_USE_SSL}
+      - STORAGE_PUBLIC_URL=${STORAGE_PUBLIC_URL}
+
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM_EMAIL=${MAIL_FROM_EMAIL}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - MAIL_RESET_PASSWORD_URL=${MAIL_RESET_PASSWORD_URL}
 
     extra_hosts:
       - 'host.docker.internal:host-gateway'
