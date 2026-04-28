@@ -1,0 +1,228 @@
+pipeline {
+    agent any
+
+    environment {
+        // Docker image config
+        DOCKER_IMAGE    = 'your-registry.com/go-boilerplate'
+        DOCKER_TAG      = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+        APP_PORT        = '3098'
+
+        // Go config
+        GOPATH          = "${WORKSPACE}/.go"
+        GOCACHE         = "${WORKSPACE}/.cache/go-build"
+        CGO_ENABLED     = '0'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+    }
+
+    stages {
+
+        // ─────────────────────────────────────
+        // Stage 1: Checkout
+        // ─────────────────────────────────────
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'git log -1 --oneline'
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 2: Generate Ent Client
+        // ─────────────────────────────────────
+        stage('Generate') {
+            steps {
+                sh '''
+                    echo ">> Generating Ent client..."
+                    go generate ./ent
+                '''
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 3: Lint & Vet
+        // ─────────────────────────────────────
+        stage('Lint') {
+            steps {
+                sh '''
+                    echo ">> Running go vet..."
+                    go vet ./...
+
+                    echo ">> Running staticcheck (if installed)..."
+                    which staticcheck && staticcheck ./... || echo "staticcheck not found, skipping"
+                '''
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 4: Unit Tests
+        // ─────────────────────────────────────
+        stage('Test') {
+            steps {
+                sh '''
+                    echo ">> Running tests..."
+                    go test -v -race -coverprofile=coverage.out ./...
+                    go tool cover -func=coverage.out
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'coverage.out', allowEmptyArchive: true
+                }
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 5: Build Go Binary (validation)
+        // ─────────────────────────────────────
+        stage('Build Binary') {
+            steps {
+                sh '''
+                    echo ">> Building Go binary..."
+                    go build -ldflags='-w -s' -o bin/app ./apps/cmd/server
+                    ls -lh bin/app
+                '''
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 6: Build Docker Image
+        // ─────────────────────────────────────
+        stage('Build Docker Image') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'staging'
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.build("${DOCKER_IMAGE}:latest-${env.BRANCH_NAME}")
+                }
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 7: Push Docker Image
+        // ─────────────────────────────────────
+        stage('Push Docker Image') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'staging'
+                }
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://your-registry.com', 'docker-registry-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                        docker.image("${DOCKER_IMAGE}:latest-${env.BRANCH_NAME}").push()
+                    }
+                }
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 8: Deploy to Staging
+        // ─────────────────────────────────────
+        stage('Deploy Staging') {
+            when {
+                branch 'staging'
+            }
+            steps {
+                withCredentials([
+                    file(credentialsId: 'staging-env-file', variable: 'ENV_FILE'),
+                    sshUserPrivateKey(credentialsId: 'staging-ssh-key',
+                                      keyFileVariable: 'SSH_KEY',
+                                      usernameVariable: 'SSH_USER')
+                ]) {
+                    sh '''
+                        STAGING_HOST="staging.yourdomain.com"
+
+                        echo ">> Deploying to staging..."
+
+                        # Copy env file to server
+                        scp -i $SSH_KEY -o StrictHostKeyChecking=no \
+                            $ENV_FILE ${SSH_USER}@${STAGING_HOST}:/opt/go-boilerplate/.env
+
+                        # Copy docker-compose and deploy
+                        scp -i $SSH_KEY -o StrictHostKeyChecking=no \
+                            docker-compose.staging.yml ${SSH_USER}@${STAGING_HOST}:/opt/go-boilerplate/
+
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${SSH_USER}@${STAGING_HOST} << 'EOF'
+                            cd /opt/go-boilerplate
+                            docker compose -f docker-compose.staging.yml pull
+                            docker compose -f docker-compose.staging.yml up -d --force-recreate
+                            docker image prune -f
+                        EOF
+                    '''
+                }
+            }
+        }
+
+        // ─────────────────────────────────────
+        // Stage 9: Deploy to Production
+        // ─────────────────────────────────────
+        stage('Deploy Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                // Manual approval sebelum deploy ke production
+                input message: '🚀 Deploy ke Production?', ok: 'Deploy!'
+
+                withCredentials([
+                    file(credentialsId: 'production-env-file', variable: 'ENV_FILE'),
+                    sshUserPrivateKey(credentialsId: 'production-ssh-key',
+                                      keyFileVariable: 'SSH_KEY',
+                                      usernameVariable: 'SSH_USER')
+                ]) {
+                    sh '''
+                        PROD_HOST="prod.yourdomain.com"
+
+                        echo ">> Deploying to production..."
+
+                        scp -i $SSH_KEY -o StrictHostKeyChecking=no \
+                            $ENV_FILE ${SSH_USER}@${PROD_HOST}:/opt/go-boilerplate/.env
+
+                        scp -i $SSH_KEY -o StrictHostKeyChecking=no \
+                            docker-compose.yml ${SSH_USER}@${PROD_HOST}:/opt/go-boilerplate/
+
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_HOST} << 'EOF'
+                            cd /opt/go-boilerplate
+                            docker compose pull
+                            docker compose up -d --force-recreate
+                            docker image prune -f
+                        EOF
+                    '''
+                }
+            }
+        }
+    }
+
+    // ─────────────────────────────────────
+    // Post Actions
+    // ─────────────────────────────────────
+    post {
+        success {
+            echo "✅ Pipeline berhasil: ${env.BRANCH_NAME} #${env.BUILD_NUMBER}"
+            // Uncomment jika pakai Slack:
+            // slackSend(color: 'good', message: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+        }
+        failure {
+            echo "❌ Pipeline gagal: ${env.BRANCH_NAME} #${env.BUILD_NUMBER}"
+            // slackSend(color: 'danger', message: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+        }
+        always {
+            // Cleanup workspace
+            cleanWs()
+        }
+    }
+}
