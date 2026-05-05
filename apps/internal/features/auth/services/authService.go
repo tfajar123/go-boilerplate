@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/url"
 	"time"
 
 	"go-boilerplate/apps/internal/database"
 	dto "go-boilerplate/apps/internal/features/auth/dto"
 	authValidation "go-boilerplate/apps/internal/features/auth/validation"
-	"go-boilerplate/apps/internal/features/mailer/services"
+	mailerService "go-boilerplate/apps/internal/features/mailer/services"
 	storageService "go-boilerplate/apps/internal/features/storage/services"
 	"go-boilerplate/apps/internal/utils"
 	"go-boilerplate/ent"
@@ -45,6 +47,7 @@ const (
 	maxLoginAttempt   = 5
 	loginTTL          = 15 * time.Minute
 	forgotPasswordTTL = 15 * time.Minute
+	registerOTPTTL    = 15 * time.Minute
 )
 
 func (s *AuthService) Login(
@@ -66,6 +69,7 @@ func (s *AuthService) Login(
 	u, err := s.client.User.
 		Query().
 		Where(user.EmailEQ(req.Email)).
+		WithProfiles().
 		Only(ctx)
 
 	if err != nil {
@@ -93,7 +97,7 @@ func (s *AuthService) Login(
 
 	userResponse := dto.UserResponse{
 		ID:        u.ID,
-		Name:      u.Name,
+		Name:      u.Edges.Profiles.Name,
 		Email:     u.Email,
 		Role:      u.Role.String(),
 		CreatedAt: u.CreatedAt,
@@ -136,32 +140,122 @@ func (s *AuthService) Register(
 		return err
 	}
 
-	// Skip upload jika image kosong
-	var profileImage string
-	if req.Image != "" {
+	// Generate 6 digit OTP
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+	otpKey := "auth:register:otp:" + req.Email
 
-		image, err := s.storage.UploadBase64(ctx, req.Image, "profiles")
-		if err != nil {
-			return fmt.Errorf("failed to upload profile image: %w", err)
-		}
-		profileImage = image
+	// Store registration data in Redis
+	err = s.redis.HSet(ctx, otpKey, map[string]any{
+		"email":    req.Email,
+		"password": string(hashedPassword),
+		"name":     req.Name,
+		"role":     "user",
+		"otp":      otp,
+	}).Err()
+	if err != nil {
+		return fmt.Errorf("failed to store registration data: %w", err)
 	}
 
-	userCreate := s.client.User.
+	err = s.redis.Expire(ctx, otpKey, registerOTPTTL).Err()
+	if err != nil {
+		return err
+	}
+
+	// Development fallback: print OTP to terminal log
+	log.Printf("\n\n📧 REGISTER OTP for %s (%s): %s (expires in %v)\n\n", req.Name, req.Email, otp, registerOTPTTL)
+
+	// if s.mailer != nil {
+	// 	if err := s.mailer.SendRegisterOTPEmail(req.Email, req.Name, otp, registerOTPTTL); err != nil {
+	// 		// _ = s.redis.Del(ctx, otpKey).Err()
+	// 		// return fmt.Errorf("failed to send OTP email: %w", err)
+	// 		log.Printf("⚠️  Failed to send OTP email, falling back to terminal log: %v", err)
+	// 	}
+	// }
+
+	return nil
+}
+
+func (s *AuthService) VerifyRegisterOTP(
+	ctx context.Context,
+	req authValidation.VerifyRegisterOTPRequest,
+) (*dto.UserResponse, error) {
+
+	if err := authValidation.ValidateAuth(req); err != nil {
+		return nil, fmt.Errorf("validation: %w", err)
+	}
+
+	otpKey := "auth:register:otp:" + req.Email
+
+	storedOTP, err := s.redis.HGet(ctx, otpKey, "otp").Result()
+	if err == redis.Nil {
+		return nil, errors.New("OTP has expired or invalid")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if storedOTP != req.OTP {
+		return nil, errors.New("Invalid OTP code")
+	}
+
+	// Get all registration data
+	data, err := s.redis.HGetAll(ctx, otpKey).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create user and profile in database within transaction
+	tx, err := s.client.Tx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := tx.User.
 		Create().
-		SetName(req.Name).
-		SetEmail(req.Email).
-		SetPassword(string(hashedPassword)).
-		SetRole(req.Role)
+		SetEmail(data["email"]).
+		SetPassword(data["password"]).
+		SetRole(user.Role(data["role"])).
+		SetEmailVerified(true).
+		Save(ctx)
 
-	// Ent otomatis generate method camelCase sesuai nama field: profileImage -> SetProfileImage
-	if profileImage != "" {
-		userCreate.SetProfileImage(profileImage)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
 	}
 
-	_, err = userCreate.Save(ctx)
+	_, err = tx.Profiles.
+		Create().
+		SetName(data["name"]).
+		SetUser(u).
+		Save(ctx)
 
-	return err
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Delete OTP
+	_ = s.redis.Del(ctx, otpKey).Err()
+
+	// Auto login after successful verification
+	sid := utils.NewSessionID()
+	err = s.SaveSession(ctx, u.ID.String(), sid, 7*24*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UserResponse{
+		ID:        u.ID,
+		Name:      data["name"],
+		Email:     u.Email,
+		Role:      u.Role.String(),
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+	}, nil
 }
 
 func (s *AuthService) incrLoginFail(
@@ -250,6 +344,7 @@ func (s *AuthService) ForgotPassword(
 	u, err := s.client.User.
 		Query().
 		Where(user.EmailEQ(req.Email)).
+		WithProfiles().
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -285,7 +380,7 @@ func (s *AuthService) ForgotPassword(
 	}
 
 	resetLink := fmt.Sprintf("%s?token=%s", s.mailerResetPasswordURL(), url.QueryEscape(resetToken))
-	if err := s.mailer.SendResetPasswordEmail(u.Email, u.Name, resetLink, expiresAt); err != nil {
+	if err := s.mailer.SendResetPasswordEmail(u.Email, u.Edges.Profiles.Name, resetLink, expiresAt); err != nil {
 		_ = s.redis.Del(ctx, tokenKey, emailKey).Err()
 		return nil, fmt.Errorf("failed to send reset password email: %w", err)
 	}

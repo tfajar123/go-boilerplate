@@ -18,11 +18,10 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Unique().Default(uuid.New),
-		field.String("name"),
 		field.String("email").Unique(),
 		field.String("password"),
 		field.Enum("role").Values("admin", "user").Default("user"),
-		field.String("profileImage").Optional(),
+		field.Bool("emailVerified").Default(false),
 		field.Time("created_at").Default(time.Now()),
 		field.Time("updated_at").Default(time.Now()),
 	}
@@ -31,6 +30,6 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("profiles", Profiles.Type),
+		edge.To("profiles", Profiles.Type).Unique(),
 	}
 }

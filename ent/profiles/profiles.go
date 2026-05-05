@@ -23,6 +23,8 @@ const (
 	FieldBirthDate = "birth_date"
 	// FieldAddress holds the string denoting the address field in the database.
 	FieldAddress = "address"
+	// FieldUserId holds the string denoting the userid field in the database.
+	FieldUserId = "user_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -37,7 +39,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_profiles"
+	UserColumn = "user_id"
 )
 
 // Columns holds all SQL columns for profiles fields.
@@ -47,25 +49,15 @@ var Columns = []string{
 	FieldImageUrl,
 	FieldBirthDate,
 	FieldAddress,
+	FieldUserId,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "profiles"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"user_profiles",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -109,6 +101,11 @@ func ByAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAddress, opts...).ToFunc()
 }
 
+// ByUserId orders the results by the userId field.
+func ByUserId(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserId, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -129,6 +126,6 @@ func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
 	)
 }

@@ -22,6 +22,5 @@ func Register(app *fiber.App, client *ent.Client, storage *database.Storage) {
 
 	registerAuthRoutes(api, client, storage)
 	registerProfileRoutes(api, client, storage)
-	registerExRoutes(api, client)
 
 }

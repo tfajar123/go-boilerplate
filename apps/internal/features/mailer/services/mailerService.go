@@ -88,3 +88,51 @@ func (s *MailerService) validateConfig() error {
 		return nil
 	}
 }
+
+func (s *MailerService) SendRegisterOTPEmail(toEmail, toName, otp string, expiresAt time.Duration) error {
+	if err := s.validateConfig(); err != nil {
+		return err
+	}
+
+	from := mail.Address{
+		Name:    s.cfg.FromName,
+		Address: s.cfg.FromEmail,
+	}
+
+	to := mail.Address{
+		Name:    toName,
+		Address: toEmail,
+	}
+
+	subject := "Register OTP"
+	htmlBody := fmt.Sprintf(`
+<html>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+	<h2>Register OTP</h2>
+	<p>Halo %s,</p>
+	<p>Kami menerima permintaan untuk melakukan verifikasi akun Anda.</p>
+	<p>
+	  <a href="%s" style="display: inline-block; padding: 12px 20px; background: #1f6feb; color: #fff; text-decoration: none; border-radius: 6px;">
+		Verifikasi
+	  </a>
+	</p>
+	<p>Link ini akan kedaluwarsa pada %s.</p>
+	<p>Jika Anda tidak meminta verifikasi, abaikan email ini.</p>
+  </body>
+</html>`, toName, s.cfg.ResetPasswordURL, time.Now().Add(expiresAt).Format(time.RFC1123))
+
+	message := strings.Join([]string{
+		fmt.Sprintf("From: %s", from.String()),
+		fmt.Sprintf("To: %s", to.String()),
+		fmt.Sprintf("Subject: %s", subject),
+		"MIME-Version: 1.0",
+		`Content-Type: text/html; charset="UTF-8"`,
+		"",
+		htmlBody,
+	}, "\r\n")
+
+	auth := smtp.PlainAuth("", s.cfg.Username, s.cfg.Password, s.cfg.Host)
+	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
+
+	return smtp.SendMail(addr, auth, s.cfg.FromEmail, []string{toEmail}, []byte(message))
+}

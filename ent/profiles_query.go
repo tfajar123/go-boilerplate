@@ -25,7 +25,6 @@ type ProfilesQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Profiles
 	withUser   *UserQuery
-	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,7 +75,7 @@ func (_q *ProfilesQuery) QueryUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(profiles.Table, profiles.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, profiles.UserTable, profiles.UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, profiles.UserTable, profiles.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -371,18 +370,11 @@ func (_q *ProfilesQuery) prepareQuery(ctx context.Context) error {
 func (_q *ProfilesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Profiles, error) {
 	var (
 		nodes       = []*Profiles{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withUser != nil,
 		}
 	)
-	if _q.withUser != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, profiles.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Profiles).scanValues(nil, columns)
 	}
@@ -414,10 +406,7 @@ func (_q *ProfilesQuery) loadUser(ctx context.Context, query *UserQuery, nodes [
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Profiles)
 	for i := range nodes {
-		if nodes[i].user_profiles == nil {
-			continue
-		}
-		fk := *nodes[i].user_profiles
+		fk := nodes[i].UserId
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -434,7 +423,7 @@ func (_q *ProfilesQuery) loadUser(ctx context.Context, query *UserQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_profiles" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "userId" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -467,6 +456,9 @@ func (_q *ProfilesQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != profiles.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(profiles.FieldUserId)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

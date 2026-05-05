@@ -26,6 +26,7 @@ func registerAuthRoutes(api fiber.Router, client *ent.Client, storage *database.
 	api.Post("/auth/register", authCont.Register)
 	api.Post("/auth/forgot-password", middlewares.RateLimiter(3, 15*time.Minute), authCont.ForgotPassword)
 	api.Post("/auth/reset-password", middlewares.RateLimiter(5, 15*time.Minute), authCont.ResetPassword)
+	api.Post("/auth/verify-otp", authCont.VerifyOTP)
 	api.Post("/auth/refresh", authCont.Refresh)
 	api.Post("/auth/logout", middlewares.AuthRequired(redisClient), authCont.Logout)
 }

@@ -55,9 +55,6 @@ migrate-hash:
 
 .PHONY: migrate-diff
 migrate-diff:
-ifndef name
-	$(error Usage: make migrate-diff name=your_migration_name)
-endif
 	@echo ">> Creating migration diff: $(name)"
 	@$(LOAD_ENV) atlas migrate diff $(name) --env $(ATLAS_ENV)
 

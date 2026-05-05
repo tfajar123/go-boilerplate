@@ -76,7 +76,7 @@ func (_q *UserQuery) QueryProfiles() *ProfilesQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(profiles.Table, profiles.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ProfilesTable, user.ProfilesColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.ProfilesTable, user.ProfilesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -300,12 +300,12 @@ func (_q *UserQuery) WithProfiles(opts ...func(*ProfilesQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Email string `json:"email,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		GroupBy(user.FieldName).
+//		GroupBy(user.FieldEmail).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
@@ -323,11 +323,11 @@ func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Email string `json:"email,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		Select(user.FieldName).
+//		Select(user.FieldEmail).
 //		Scan(ctx, &v)
 func (_q *UserQuery) Select(fields ...string) *UserSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -395,9 +395,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		return nodes, nil
 	}
 	if query := _q.withProfiles; query != nil {
-		if err := _q.loadProfiles(ctx, query, nodes,
-			func(n *User) { n.Edges.Profiles = []*Profiles{} },
-			func(n *User, e *Profiles) { n.Edges.Profiles = append(n.Edges.Profiles, e) }); err != nil {
+		if err := _q.loadProfiles(ctx, query, nodes, nil,
+			func(n *User, e *Profiles) { n.Edges.Profiles = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -410,11 +409,10 @@ func (_q *UserQuery) loadProfiles(ctx context.Context, query *ProfilesQuery, nod
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(profiles.FieldUserId)
+	}
 	query.Where(predicate.Profiles(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.ProfilesColumn), fks...))
 	}))
@@ -423,13 +421,10 @@ func (_q *UserQuery) loadProfiles(ctx context.Context, query *ProfilesQuery, nod
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_profiles
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_profiles" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.UserId
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_profiles" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "userId" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

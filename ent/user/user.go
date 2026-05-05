@@ -16,16 +16,14 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
-	// FieldProfileImage holds the string denoting the profileimage field in the database.
-	FieldProfileImage = "profile_image"
+	// FieldEmailVerified holds the string denoting the emailverified field in the database.
+	FieldEmailVerified = "email_verified"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -40,17 +38,16 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "profiles" package.
 	ProfilesInverseTable = "profiles"
 	// ProfilesColumn is the table column denoting the profiles relation/edge.
-	ProfilesColumn = "user_profiles"
+	ProfilesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
-	FieldName,
 	FieldEmail,
 	FieldPassword,
 	FieldRole,
-	FieldProfileImage,
+	FieldEmailVerified,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -66,6 +63,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultEmailVerified holds the default value on creation for the "emailVerified" field.
+	DefaultEmailVerified bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -108,11 +107,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
@@ -128,9 +122,9 @@ func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
 }
 
-// ByProfileImage orders the results by the profileImage field.
-func ByProfileImage(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldProfileImage, opts...).ToFunc()
+// ByEmailVerified orders the results by the emailVerified field.
+func ByEmailVerified(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmailVerified, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -143,23 +137,16 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByProfilesCount orders the results by profiles count.
-func ByProfilesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByProfilesField orders the results by profiles field.
+func ByProfilesField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newProfilesStep(), opts...)
-	}
-}
-
-// ByProfiles orders the results by profiles terms.
-func ByProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newProfilesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newProfilesStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newProfilesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProfilesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ProfilesTable, ProfilesColumn),
+		sqlgraph.Edge(sqlgraph.O2O, false, ProfilesTable, ProfilesColumn),
 	)
 }

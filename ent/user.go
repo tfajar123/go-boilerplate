@@ -4,6 +4,7 @@ package ent
 
 import (
 	"fmt"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 	"strings"
 	"time"
@@ -18,16 +19,14 @@ type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"password,omitempty"`
 	// Role holds the value of the "role" field.
 	Role user.Role `json:"role,omitempty"`
-	// ProfileImage holds the value of the "profileImage" field.
-	ProfileImage string `json:"profileImage,omitempty"`
+	// EmailVerified holds the value of the "emailVerified" field.
+	EmailVerified bool `json:"emailVerified,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -41,17 +40,19 @@ type User struct {
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
 	// Profiles holds the value of the profiles edge.
-	Profiles []*Profiles `json:"profiles,omitempty"`
+	Profiles *Profiles `json:"profiles,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
 // ProfilesOrErr returns the Profiles value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserEdges) ProfilesOrErr() ([]*Profiles, error) {
-	if e.loadedTypes[0] {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) ProfilesOrErr() (*Profiles, error) {
+	if e.Profiles != nil {
 		return e.Profiles, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: profiles.Label}
 	}
 	return nil, &NotLoadedError{edge: "profiles"}
 }
@@ -61,7 +62,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldRole, user.FieldProfileImage:
+		case user.FieldEmailVerified:
+			values[i] = new(sql.NullBool)
+		case user.FieldEmail, user.FieldPassword, user.FieldRole:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -88,12 +91,6 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case user.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				_m.Name = value.String
-			}
 		case user.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
@@ -112,11 +109,11 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Role = user.Role(value.String)
 			}
-		case user.FieldProfileImage:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field profileImage", values[i])
+		case user.FieldEmailVerified:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field emailVerified", values[i])
 			} else if value.Valid {
-				_m.ProfileImage = value.String
+				_m.EmailVerified = value.Bool
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -171,9 +168,6 @@ func (_m *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("name=")
-	builder.WriteString(_m.Name)
-	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(_m.Email)
 	builder.WriteString(", ")
@@ -183,8 +177,8 @@ func (_m *User) String() string {
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Role))
 	builder.WriteString(", ")
-	builder.WriteString("profileImage=")
-	builder.WriteString(_m.ProfileImage)
+	builder.WriteString("emailVerified=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EmailVerified))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

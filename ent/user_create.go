@@ -22,12 +22,6 @@ type UserCreate struct {
 	hooks    []Hook
 }
 
-// SetName sets the "name" field.
-func (_c *UserCreate) SetName(v string) *UserCreate {
-	_c.mutation.SetName(v)
-	return _c
-}
-
 // SetEmail sets the "email" field.
 func (_c *UserCreate) SetEmail(v string) *UserCreate {
 	_c.mutation.SetEmail(v)
@@ -54,16 +48,16 @@ func (_c *UserCreate) SetNillableRole(v *user.Role) *UserCreate {
 	return _c
 }
 
-// SetProfileImage sets the "profileImage" field.
-func (_c *UserCreate) SetProfileImage(v string) *UserCreate {
-	_c.mutation.SetProfileImage(v)
+// SetEmailVerified sets the "emailVerified" field.
+func (_c *UserCreate) SetEmailVerified(v bool) *UserCreate {
+	_c.mutation.SetEmailVerified(v)
 	return _c
 }
 
-// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
-func (_c *UserCreate) SetNillableProfileImage(v *string) *UserCreate {
+// SetNillableEmailVerified sets the "emailVerified" field if the given value is not nil.
+func (_c *UserCreate) SetNillableEmailVerified(v *bool) *UserCreate {
 	if v != nil {
-		_c.SetProfileImage(*v)
+		_c.SetEmailVerified(*v)
 	}
 	return _c
 }
@@ -110,19 +104,23 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 	return _c
 }
 
-// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
-func (_c *UserCreate) AddProfileIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddProfileIDs(ids...)
+// SetProfilesID sets the "profiles" edge to the Profiles entity by ID.
+func (_c *UserCreate) SetProfilesID(id uuid.UUID) *UserCreate {
+	_c.mutation.SetProfilesID(id)
 	return _c
 }
 
-// AddProfiles adds the "profiles" edges to the Profiles entity.
-func (_c *UserCreate) AddProfiles(v ...*Profiles) *UserCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
+// SetNillableProfilesID sets the "profiles" edge to the Profiles entity by ID if the given value is not nil.
+func (_c *UserCreate) SetNillableProfilesID(id *uuid.UUID) *UserCreate {
+	if id != nil {
+		_c = _c.SetProfilesID(*id)
 	}
-	return _c.AddProfileIDs(ids...)
+	return _c
+}
+
+// SetProfiles sets the "profiles" edge to the Profiles entity.
+func (_c *UserCreate) SetProfiles(v *Profiles) *UserCreate {
+	return _c.SetProfilesID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -164,6 +162,10 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultRole
 		_c.mutation.SetRole(v)
 	}
+	if _, ok := _c.mutation.EmailVerified(); !ok {
+		v := user.DefaultEmailVerified
+		_c.mutation.SetEmailVerified(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := user.DefaultCreatedAt
 		_c.mutation.SetCreatedAt(v)
@@ -180,9 +182,6 @@ func (_c *UserCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserCreate) check() error {
-	if _, ok := _c.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
-	}
 	if _, ok := _c.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
 	}
@@ -196,6 +195,9 @@ func (_c *UserCreate) check() error {
 		if err := user.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.EmailVerified(); !ok {
+		return &ValidationError{Name: "emailVerified", err: errors.New(`ent: missing required field "User.emailVerified"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
@@ -238,10 +240,6 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -254,9 +252,9 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
-	if value, ok := _c.mutation.ProfileImage(); ok {
-		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
-		_node.ProfileImage = value
+	if value, ok := _c.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
+		_node.EmailVerified = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
@@ -268,7 +266,7 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if nodes := _c.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   user.ProfilesTable,
 			Columns: []string{user.ProfilesColumn},

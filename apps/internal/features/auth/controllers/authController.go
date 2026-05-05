@@ -97,6 +97,24 @@ func (h *AuthController) ResetPassword(c *fiber.Ctx) error {
 	return utils.Ok(c, "Reset Password Success", result)
 }
 
+func (h *AuthController) VerifyOTP(c *fiber.Ctx) error {
+	var req authValidation.VerifyRegisterOTPRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
+	}
+
+	result, err := h.authService.VerifyRegisterOTP(c.Context(), req)
+	if err != nil {
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
+		}
+
+		return utils.BadRequest(c, "Verify OTP Failed", err.Error())
+	}
+
+	return utils.Ok(c, "Verify OTP Success", result)
+}
+
 /* =========================
    REFRESH TOKEN
 ========================= */
