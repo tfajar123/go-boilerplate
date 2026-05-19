@@ -76,6 +76,11 @@ func Address(v string) predicate.Profiles {
 	return predicate.Profiles(sql.FieldEQ(FieldAddress, v))
 }
 
+// UserId applies equality check predicate on the "userId" field. It's identical to UserIdEQ.
+func UserId(v uuid.UUID) predicate.Profiles {
+	return predicate.Profiles(sql.FieldEQ(FieldUserId, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Profiles {
 	return predicate.Profiles(sql.FieldEQ(FieldCreatedAt, v))
@@ -376,6 +381,26 @@ func AddressContainsFold(v string) predicate.Profiles {
 	return predicate.Profiles(sql.FieldContainsFold(FieldAddress, v))
 }
 
+// UserIdEQ applies the EQ predicate on the "userId" field.
+func UserIdEQ(v uuid.UUID) predicate.Profiles {
+	return predicate.Profiles(sql.FieldEQ(FieldUserId, v))
+}
+
+// UserIdNEQ applies the NEQ predicate on the "userId" field.
+func UserIdNEQ(v uuid.UUID) predicate.Profiles {
+	return predicate.Profiles(sql.FieldNEQ(FieldUserId, v))
+}
+
+// UserIdIn applies the In predicate on the "userId" field.
+func UserIdIn(vs ...uuid.UUID) predicate.Profiles {
+	return predicate.Profiles(sql.FieldIn(FieldUserId, vs...))
+}
+
+// UserIdNotIn applies the NotIn predicate on the "userId" field.
+func UserIdNotIn(vs ...uuid.UUID) predicate.Profiles {
+	return predicate.Profiles(sql.FieldNotIn(FieldUserId, vs...))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Profiles {
 	return predicate.Profiles(sql.FieldEQ(FieldCreatedAt, v))
@@ -461,7 +486,7 @@ func HasUser() predicate.Profiles {
 	return predicate.Profiles(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

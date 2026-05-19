@@ -20,6 +20,7 @@ func (Profiles) Fields() []ent.Field {
 		field.String("imageUrl").Optional(),
 		field.String("birthDate").Optional(),
 		field.String("address").Optional(),
+		field.UUID("userId", uuid.UUID{}).Unique(),
 		field.Time("created_at").Default(time.Now()),
 		field.Time("updated_at").Default(time.Now()),
 	}
@@ -30,6 +31,7 @@ func (Profiles) Edges() []ent.Edge {
 		edge.From("user", User.Type).
 			Ref("profiles").
 			Unique().
-			Required(),
+			Required().
+			Field("userId"),
 	}
 }

@@ -1,4 +1,4 @@
-package authController
+package authhandler
 
 import (
 	authService "go-boilerplate/apps/internal/features/auth/services"
@@ -8,15 +8,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type AuthController struct {
+type AuthHandler struct {
 	authService *authService.AuthService
 }
 
-func NewAuthHandler(authService *authService.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthHandler(authService *authService.AuthService) *AuthHandler {
+	return &AuthHandler{authService: authService}
 }
 
-func (h *AuthController) Login(c *fiber.Ctx) error {
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req authValidation.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequest(c, "Invalid Body Request", err.Error())
@@ -38,7 +38,7 @@ func (h *AuthController) Login(c *fiber.Ctx) error {
 	return utils.Ok(c, "Login Success", userData)
 }
 
-func (h *AuthController) Register(c *fiber.Ctx) error {
+func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var req authValidation.RegisterRequest
 
 	if err := c.BodyParser(&req); err != nil {
@@ -61,7 +61,7 @@ func (h *AuthController) Register(c *fiber.Ctx) error {
 	return utils.Created(c, "Registration Success", nil)
 }
 
-func (h *AuthController) ForgotPassword(c *fiber.Ctx) error {
+func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 	var req authValidation.ForgotPasswordRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequest(c, "Invalid Body Request", err.Error())
@@ -79,7 +79,7 @@ func (h *AuthController) ForgotPassword(c *fiber.Ctx) error {
 	return utils.Ok(c, "Forgot Password Success", result)
 }
 
-func (h *AuthController) ResetPassword(c *fiber.Ctx) error {
+func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 	var req authValidation.ResetPasswordRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequest(c, "Invalid Body Request", err.Error())
@@ -97,11 +97,29 @@ func (h *AuthController) ResetPassword(c *fiber.Ctx) error {
 	return utils.Ok(c, "Reset Password Success", result)
 }
 
+func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
+	var req authValidation.VerifyRegisterOTPRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequest(c, "Invalid Body Request", err.Error())
+	}
+
+	result, err := h.authService.VerifyRegisterOTP(c.Context(), req)
+	if err != nil {
+		if validationErrs := authValidation.FormatValidationError(err); len(validationErrs) > 0 {
+			return utils.BadRequest(c, "Validation Failed", validationErrs)
+		}
+
+		return utils.BadRequest(c, "Verify OTP Failed", err.Error())
+	}
+
+	return utils.Ok(c, "Verify OTP Success", result)
+}
+
 /* =========================
    REFRESH TOKEN
 ========================= */
 
-func (h *AuthController) Refresh(c *fiber.Ctx) error {
+func (h *AuthHandler) Refresh(c *fiber.Ctx) error {
 	type Req struct {
 		RefreshToken string `json:"refresh_token"`
 	}
@@ -126,7 +144,7 @@ func (h *AuthController) Refresh(c *fiber.Ctx) error {
    LOGOUT
 ========================= */
 
-func (h *AuthController) Logout(c *fiber.Ctx) error {
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	sessionID := c.Locals("session_id").(string)
 

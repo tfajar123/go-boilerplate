@@ -18,11 +18,11 @@ func init() {
 	profilesFields := schema.Profiles{}.Fields()
 	_ = profilesFields
 	// profilesDescCreatedAt is the schema descriptor for created_at field.
-	profilesDescCreatedAt := profilesFields[5].Descriptor()
+	profilesDescCreatedAt := profilesFields[6].Descriptor()
 	// profiles.DefaultCreatedAt holds the default value on creation for the created_at field.
 	profiles.DefaultCreatedAt = profilesDescCreatedAt.Default.(time.Time)
 	// profilesDescUpdatedAt is the schema descriptor for updated_at field.
-	profilesDescUpdatedAt := profilesFields[6].Descriptor()
+	profilesDescUpdatedAt := profilesFields[7].Descriptor()
 	// profiles.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	profiles.DefaultUpdatedAt = profilesDescUpdatedAt.Default.(time.Time)
 	// profilesDescID is the schema descriptor for id field.
@@ -31,12 +31,16 @@ func init() {
 	profiles.DefaultID = profilesDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
+	// userDescEmailVerified is the schema descriptor for emailVerified field.
+	userDescEmailVerified := userFields[4].Descriptor()
+	// user.DefaultEmailVerified holds the default value on creation for the emailVerified field.
+	user.DefaultEmailVerified = userDescEmailVerified.Default.(bool)
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[6].Descriptor()
+	userDescCreatedAt := userFields[5].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(time.Time)
 	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[7].Descriptor()
+	userDescUpdatedAt := userFields[6].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(time.Time)
 	// userDescID is the schema descriptor for id field.

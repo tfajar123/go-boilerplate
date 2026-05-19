@@ -30,20 +30,6 @@ func (_u *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *UserUpdate) SetName(v string) *UserUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableName(v *string) *UserUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
 // SetEmail sets the "email" field.
 func (_u *UserUpdate) SetEmail(v string) *UserUpdate {
 	_u.mutation.SetEmail(v)
@@ -86,23 +72,17 @@ func (_u *UserUpdate) SetNillableRole(v *user.Role) *UserUpdate {
 	return _u
 }
 
-// SetProfileImage sets the "profileImage" field.
-func (_u *UserUpdate) SetProfileImage(v string) *UserUpdate {
-	_u.mutation.SetProfileImage(v)
+// SetEmailVerified sets the "emailVerified" field.
+func (_u *UserUpdate) SetEmailVerified(v bool) *UserUpdate {
+	_u.mutation.SetEmailVerified(v)
 	return _u
 }
 
-// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableProfileImage(v *string) *UserUpdate {
+// SetNillableEmailVerified sets the "emailVerified" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableEmailVerified(v *bool) *UserUpdate {
 	if v != nil {
-		_u.SetProfileImage(*v)
+		_u.SetEmailVerified(*v)
 	}
-	return _u
-}
-
-// ClearProfileImage clears the value of the "profileImage" field.
-func (_u *UserUpdate) ClearProfileImage() *UserUpdate {
-	_u.mutation.ClearProfileImage()
 	return _u
 }
 
@@ -134,19 +114,23 @@ func (_u *UserUpdate) SetNillableUpdatedAt(v *time.Time) *UserUpdate {
 	return _u
 }
 
-// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
-func (_u *UserUpdate) AddProfileIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.AddProfileIDs(ids...)
+// SetProfilesID sets the "profiles" edge to the Profiles entity by ID.
+func (_u *UserUpdate) SetProfilesID(id uuid.UUID) *UserUpdate {
+	_u.mutation.SetProfilesID(id)
 	return _u
 }
 
-// AddProfiles adds the "profiles" edges to the Profiles entity.
-func (_u *UserUpdate) AddProfiles(v ...*Profiles) *UserUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
+// SetNillableProfilesID sets the "profiles" edge to the Profiles entity by ID if the given value is not nil.
+func (_u *UserUpdate) SetNillableProfilesID(id *uuid.UUID) *UserUpdate {
+	if id != nil {
+		_u = _u.SetProfilesID(*id)
 	}
-	return _u.AddProfileIDs(ids...)
+	return _u
+}
+
+// SetProfiles sets the "profiles" edge to the Profiles entity.
+func (_u *UserUpdate) SetProfiles(v *Profiles) *UserUpdate {
+	return _u.SetProfilesID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -154,25 +138,10 @@ func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
 }
 
-// ClearProfiles clears all "profiles" edges to the Profiles entity.
+// ClearProfiles clears the "profiles" edge to the Profiles entity.
 func (_u *UserUpdate) ClearProfiles() *UserUpdate {
 	_u.mutation.ClearProfiles()
 	return _u
-}
-
-// RemoveProfileIDs removes the "profiles" edge to Profiles entities by IDs.
-func (_u *UserUpdate) RemoveProfileIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.RemoveProfileIDs(ids...)
-	return _u
-}
-
-// RemoveProfiles removes "profiles" edges to Profiles entities.
-func (_u *UserUpdate) RemoveProfiles(v ...*Profiles) *UserUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveProfileIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -224,9 +193,6 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -236,11 +202,8 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.ProfileImage(); ok {
-		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
-	}
-	if _u.mutation.ProfileImageCleared() {
-		_spec.ClearField(user.FieldProfileImage, field.TypeString)
+	if value, ok := _u.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
@@ -250,7 +213,7 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   user.ProfilesTable,
 			Columns: []string{user.ProfilesColumn},
@@ -258,28 +221,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedProfilesIDs(); len(nodes) > 0 && !_u.mutation.ProfilesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.ProfilesTable,
-			Columns: []string{user.ProfilesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := _u.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   user.ProfilesTable,
 			Columns: []string{user.ProfilesColumn},
@@ -311,20 +258,6 @@ type UserUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *UserMutation
-}
-
-// SetName sets the "name" field.
-func (_u *UserUpdateOne) SetName(v string) *UserUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableName(v *string) *UserUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
 }
 
 // SetEmail sets the "email" field.
@@ -369,23 +302,17 @@ func (_u *UserUpdateOne) SetNillableRole(v *user.Role) *UserUpdateOne {
 	return _u
 }
 
-// SetProfileImage sets the "profileImage" field.
-func (_u *UserUpdateOne) SetProfileImage(v string) *UserUpdateOne {
-	_u.mutation.SetProfileImage(v)
+// SetEmailVerified sets the "emailVerified" field.
+func (_u *UserUpdateOne) SetEmailVerified(v bool) *UserUpdateOne {
+	_u.mutation.SetEmailVerified(v)
 	return _u
 }
 
-// SetNillableProfileImage sets the "profileImage" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableProfileImage(v *string) *UserUpdateOne {
+// SetNillableEmailVerified sets the "emailVerified" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableEmailVerified(v *bool) *UserUpdateOne {
 	if v != nil {
-		_u.SetProfileImage(*v)
+		_u.SetEmailVerified(*v)
 	}
-	return _u
-}
-
-// ClearProfileImage clears the value of the "profileImage" field.
-func (_u *UserUpdateOne) ClearProfileImage() *UserUpdateOne {
-	_u.mutation.ClearProfileImage()
 	return _u
 }
 
@@ -417,19 +344,23 @@ func (_u *UserUpdateOne) SetNillableUpdatedAt(v *time.Time) *UserUpdateOne {
 	return _u
 }
 
-// AddProfileIDs adds the "profiles" edge to the Profiles entity by IDs.
-func (_u *UserUpdateOne) AddProfileIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.AddProfileIDs(ids...)
+// SetProfilesID sets the "profiles" edge to the Profiles entity by ID.
+func (_u *UserUpdateOne) SetProfilesID(id uuid.UUID) *UserUpdateOne {
+	_u.mutation.SetProfilesID(id)
 	return _u
 }
 
-// AddProfiles adds the "profiles" edges to the Profiles entity.
-func (_u *UserUpdateOne) AddProfiles(v ...*Profiles) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
+// SetNillableProfilesID sets the "profiles" edge to the Profiles entity by ID if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableProfilesID(id *uuid.UUID) *UserUpdateOne {
+	if id != nil {
+		_u = _u.SetProfilesID(*id)
 	}
-	return _u.AddProfileIDs(ids...)
+	return _u
+}
+
+// SetProfiles sets the "profiles" edge to the Profiles entity.
+func (_u *UserUpdateOne) SetProfiles(v *Profiles) *UserUpdateOne {
+	return _u.SetProfilesID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -437,25 +368,10 @@ func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
 }
 
-// ClearProfiles clears all "profiles" edges to the Profiles entity.
+// ClearProfiles clears the "profiles" edge to the Profiles entity.
 func (_u *UserUpdateOne) ClearProfiles() *UserUpdateOne {
 	_u.mutation.ClearProfiles()
 	return _u
-}
-
-// RemoveProfileIDs removes the "profiles" edge to Profiles entities by IDs.
-func (_u *UserUpdateOne) RemoveProfileIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.RemoveProfileIDs(ids...)
-	return _u
-}
-
-// RemoveProfiles removes "profiles" edges to Profiles entities.
-func (_u *UserUpdateOne) RemoveProfiles(v ...*Profiles) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveProfileIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -537,9 +453,6 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -549,11 +462,8 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.ProfileImage(); ok {
-		_spec.SetField(user.FieldProfileImage, field.TypeString, value)
-	}
-	if _u.mutation.ProfileImageCleared() {
-		_spec.ClearField(user.FieldProfileImage, field.TypeString)
+	if value, ok := _u.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
@@ -563,7 +473,7 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.ProfilesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   user.ProfilesTable,
 			Columns: []string{user.ProfilesColumn},
@@ -571,28 +481,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedProfilesIDs(); len(nodes) > 0 && !_u.mutation.ProfilesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.ProfilesTable,
-			Columns: []string{user.ProfilesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(profiles.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := _u.mutation.ProfilesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   user.ProfilesTable,
 			Columns: []string{user.ProfilesColumn},

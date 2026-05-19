@@ -104,6 +104,20 @@ func (_u *ProfilesUpdate) ClearAddress() *ProfilesUpdate {
 	return _u
 }
 
+// SetUserId sets the "userId" field.
+func (_u *ProfilesUpdate) SetUserId(v uuid.UUID) *ProfilesUpdate {
+	_u.mutation.SetUserId(v)
+	return _u
+}
+
+// SetNillableUserId sets the "userId" field if the given value is not nil.
+func (_u *ProfilesUpdate) SetNillableUserId(v *uuid.UUID) *ProfilesUpdate {
+	if v != nil {
+		_u.SetUserId(*v)
+	}
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *ProfilesUpdate) SetCreatedAt(v time.Time) *ProfilesUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -230,7 +244,7 @@ func (_u *ProfilesUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   profiles.UserTable,
 			Columns: []string{profiles.UserColumn},
@@ -243,7 +257,7 @@ func (_u *ProfilesUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   profiles.UserTable,
 			Columns: []string{profiles.UserColumn},
@@ -348,6 +362,20 @@ func (_u *ProfilesUpdateOne) SetNillableAddress(v *string) *ProfilesUpdateOne {
 // ClearAddress clears the value of the "address" field.
 func (_u *ProfilesUpdateOne) ClearAddress() *ProfilesUpdateOne {
 	_u.mutation.ClearAddress()
+	return _u
+}
+
+// SetUserId sets the "userId" field.
+func (_u *ProfilesUpdateOne) SetUserId(v uuid.UUID) *ProfilesUpdateOne {
+	_u.mutation.SetUserId(v)
+	return _u
+}
+
+// SetNillableUserId sets the "userId" field if the given value is not nil.
+func (_u *ProfilesUpdateOne) SetNillableUserId(v *uuid.UUID) *ProfilesUpdateOne {
+	if v != nil {
+		_u.SetUserId(*v)
+	}
 	return _u
 }
 
@@ -507,7 +535,7 @@ func (_u *ProfilesUpdateOne) sqlSave(ctx context.Context) (_node *Profiles, err 
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   profiles.UserTable,
 			Columns: []string{profiles.UserColumn},
@@ -520,7 +548,7 @@ func (_u *ProfilesUpdateOne) sqlSave(ctx context.Context) (_node *Profiles, err 
 	}
 	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   profiles.UserTable,
 			Columns: []string{profiles.UserColumn},

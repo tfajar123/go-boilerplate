@@ -70,6 +70,12 @@ func (_c *ProfilesCreate) SetNillableAddress(v *string) *ProfilesCreate {
 	return _c
 }
 
+// SetUserId sets the "userId" field.
+func (_c *ProfilesCreate) SetUserId(v uuid.UUID) *ProfilesCreate {
+	_c.mutation.SetUserId(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *ProfilesCreate) SetCreatedAt(v time.Time) *ProfilesCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -177,6 +183,9 @@ func (_c *ProfilesCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Profiles.name"`)}
 	}
+	if _, ok := _c.mutation.UserId(); !ok {
+		return &ValidationError{Name: "userId", err: errors.New(`ent: missing required field "Profiles.userId"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Profiles.created_at"`)}
 	}
@@ -247,7 +256,7 @@ func (_c *ProfilesCreate) createSpec() (*Profiles, *sqlgraph.CreateSpec) {
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   profiles.UserTable,
 			Columns: []string{profiles.UserColumn},
@@ -259,7 +268,7 @@ func (_c *ProfilesCreate) createSpec() (*Profiles, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_profiles = &nodes[0]
+		_node.UserId = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

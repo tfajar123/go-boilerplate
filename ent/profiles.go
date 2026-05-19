@@ -27,15 +27,16 @@ type Profiles struct {
 	BirthDate string `json:"birthDate,omitempty"`
 	// Address holds the value of the "address" field.
 	Address string `json:"address,omitempty"`
+	// UserId holds the value of the "userId" field.
+	UserId uuid.UUID `json:"userId,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProfilesQuery when eager-loading is set.
-	Edges         ProfilesEdges `json:"edges"`
-	user_profiles *uuid.UUID
-	selectValues  sql.SelectValues
+	Edges        ProfilesEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ProfilesEdges holds the relations/edges for other nodes in the graph.
@@ -67,10 +68,8 @@ func (*Profiles) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case profiles.FieldCreatedAt, profiles.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case profiles.FieldID:
+		case profiles.FieldID, profiles.FieldUserId:
 			values[i] = new(uuid.UUID)
-		case profiles.ForeignKeys[0]: // user_profiles
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -116,6 +115,12 @@ func (_m *Profiles) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Address = value.String
 			}
+		case profiles.FieldUserId:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field userId", values[i])
+			} else if value != nil {
+				_m.UserId = *value
+			}
 		case profiles.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -127,13 +132,6 @@ func (_m *Profiles) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
-			}
-		case profiles.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field user_profiles", values[i])
-			} else if value.Valid {
-				_m.user_profiles = new(uuid.UUID)
-				*_m.user_profiles = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -187,6 +185,9 @@ func (_m *Profiles) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("address=")
 	builder.WriteString(_m.Address)
+	builder.WriteString(", ")
+	builder.WriteString("userId=")
+	builder.WriteString(fmt.Sprintf("%v", _m.UserId))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

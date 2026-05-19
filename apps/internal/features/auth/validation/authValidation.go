@@ -2,7 +2,6 @@ package authValidation
 
 import (
 	"fmt"
-	"go-boilerplate/ent/user"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -15,11 +14,9 @@ type LoginRequest struct {
 }
 
 type RegisterRequest struct {
-	Name     string    `validate:"required,min=3,max=100"`
-	Email    string    `validate:"required,email"`
-	Password string    `validate:"required,min=8,max=72"`
-	Role     user.Role `validate:"required,oneof=admin user"`
-	Image    string    `validate:"omitempty"`
+	Name     string `validate:"required,min=3,max=100"`
+	Email    string `validate:"required,email"`
+	Password string `validate:"required,min=8,max=72"`
 }
 
 type ForgotPasswordRequest struct {
@@ -30,6 +27,11 @@ type ResetPasswordRequest struct {
 	Token           string `validate:"required"`
 	NewPassword     string `validate:"required,min=8,max=72"`
 	ConfirmPassword string `validate:"required,eqfield=NewPassword"`
+}
+
+type VerifyRegisterOTPRequest struct {
+	Email string `validate:"required,email"`
+	OTP   string `validate:"required,len=6,numeric"`
 }
 
 func ValidateAuth(s any) error {

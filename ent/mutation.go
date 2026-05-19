@@ -337,6 +337,42 @@ func (m *ProfilesMutation) ResetAddress() {
 	delete(m.clearedFields, profiles.FieldAddress)
 }
 
+// SetUserId sets the "userId" field.
+func (m *ProfilesMutation) SetUserId(u uuid.UUID) {
+	m.user = &u
+}
+
+// UserId returns the value of the "userId" field in the mutation.
+func (m *ProfilesMutation) UserId() (r uuid.UUID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserId returns the old "userId" field's value of the Profiles entity.
+// If the Profiles object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfilesMutation) OldUserId(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserId: %w", err)
+	}
+	return oldValue.UserId, nil
+}
+
+// ResetUserId resets all changes to the "userId" field.
+func (m *ProfilesMutation) ResetUserId() {
+	m.user = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *ProfilesMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -417,6 +453,7 @@ func (m *ProfilesMutation) SetUserID(id uuid.UUID) {
 // ClearUser clears the "user" edge to the User entity.
 func (m *ProfilesMutation) ClearUser() {
 	m.cleareduser = true
+	m.clearedFields[profiles.FieldUserId] = struct{}{}
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
@@ -482,7 +519,7 @@ func (m *ProfilesMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProfilesMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, profiles.FieldName)
 	}
@@ -494,6 +531,9 @@ func (m *ProfilesMutation) Fields() []string {
 	}
 	if m.address != nil {
 		fields = append(fields, profiles.FieldAddress)
+	}
+	if m.user != nil {
+		fields = append(fields, profiles.FieldUserId)
 	}
 	if m.created_at != nil {
 		fields = append(fields, profiles.FieldCreatedAt)
@@ -517,6 +557,8 @@ func (m *ProfilesMutation) Field(name string) (ent.Value, bool) {
 		return m.BirthDate()
 	case profiles.FieldAddress:
 		return m.Address()
+	case profiles.FieldUserId:
+		return m.UserId()
 	case profiles.FieldCreatedAt:
 		return m.CreatedAt()
 	case profiles.FieldUpdatedAt:
@@ -538,6 +580,8 @@ func (m *ProfilesMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldBirthDate(ctx)
 	case profiles.FieldAddress:
 		return m.OldAddress(ctx)
+	case profiles.FieldUserId:
+		return m.OldUserId(ctx)
 	case profiles.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case profiles.FieldUpdatedAt:
@@ -578,6 +622,13 @@ func (m *ProfilesMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAddress(v)
+		return nil
+	case profiles.FieldUserId:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserId(v)
 		return nil
 	case profiles.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -675,6 +726,9 @@ func (m *ProfilesMutation) ResetField(name string) error {
 	case profiles.FieldAddress:
 		m.ResetAddress()
 		return nil
+	case profiles.FieldUserId:
+		m.ResetUserId()
+		return nil
 	case profiles.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -765,16 +819,14 @@ type UserMutation struct {
 	op              Op
 	typ             string
 	id              *uuid.UUID
-	name            *string
 	email           *string
 	password        *string
 	role            *user.Role
-	profileImage    *string
+	emailVerified   *bool
 	created_at      *time.Time
 	updated_at      *time.Time
 	clearedFields   map[string]struct{}
-	profiles        map[uuid.UUID]struct{}
-	removedprofiles map[uuid.UUID]struct{}
+	profiles        *uuid.UUID
 	clearedprofiles bool
 	done            bool
 	oldValue        func(context.Context) (*User, error)
@@ -885,42 +937,6 @@ func (m *UserMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	}
 }
 
-// SetName sets the "name" field.
-func (m *UserMutation) SetName(s string) {
-	m.name = &s
-}
-
-// Name returns the value of the "name" field in the mutation.
-func (m *UserMutation) Name() (r string, exists bool) {
-	v := m.name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldName returns the old "name" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
-	}
-	return oldValue.Name, nil
-}
-
-// ResetName resets all changes to the "name" field.
-func (m *UserMutation) ResetName() {
-	m.name = nil
-}
-
 // SetEmail sets the "email" field.
 func (m *UserMutation) SetEmail(s string) {
 	m.email = &s
@@ -1029,53 +1045,40 @@ func (m *UserMutation) ResetRole() {
 	m.role = nil
 }
 
-// SetProfileImage sets the "profileImage" field.
-func (m *UserMutation) SetProfileImage(s string) {
-	m.profileImage = &s
+// SetEmailVerified sets the "emailVerified" field.
+func (m *UserMutation) SetEmailVerified(b bool) {
+	m.emailVerified = &b
 }
 
-// ProfileImage returns the value of the "profileImage" field in the mutation.
-func (m *UserMutation) ProfileImage() (r string, exists bool) {
-	v := m.profileImage
+// EmailVerified returns the value of the "emailVerified" field in the mutation.
+func (m *UserMutation) EmailVerified() (r bool, exists bool) {
+	v := m.emailVerified
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldProfileImage returns the old "profileImage" field's value of the User entity.
+// OldEmailVerified returns the old "emailVerified" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldProfileImage(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldEmailVerified(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProfileImage is only allowed on UpdateOne operations")
+		return v, errors.New("OldEmailVerified is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProfileImage requires an ID field in the mutation")
+		return v, errors.New("OldEmailVerified requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProfileImage: %w", err)
+		return v, fmt.Errorf("querying old value for OldEmailVerified: %w", err)
 	}
-	return oldValue.ProfileImage, nil
+	return oldValue.EmailVerified, nil
 }
 
-// ClearProfileImage clears the value of the "profileImage" field.
-func (m *UserMutation) ClearProfileImage() {
-	m.profileImage = nil
-	m.clearedFields[user.FieldProfileImage] = struct{}{}
-}
-
-// ProfileImageCleared returns if the "profileImage" field was cleared in this mutation.
-func (m *UserMutation) ProfileImageCleared() bool {
-	_, ok := m.clearedFields[user.FieldProfileImage]
-	return ok
-}
-
-// ResetProfileImage resets all changes to the "profileImage" field.
-func (m *UserMutation) ResetProfileImage() {
-	m.profileImage = nil
-	delete(m.clearedFields, user.FieldProfileImage)
+// ResetEmailVerified resets all changes to the "emailVerified" field.
+func (m *UserMutation) ResetEmailVerified() {
+	m.emailVerified = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1150,14 +1153,9 @@ func (m *UserMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// AddProfileIDs adds the "profiles" edge to the Profiles entity by ids.
-func (m *UserMutation) AddProfileIDs(ids ...uuid.UUID) {
-	if m.profiles == nil {
-		m.profiles = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.profiles[ids[i]] = struct{}{}
-	}
+// SetProfilesID sets the "profiles" edge to the Profiles entity by id.
+func (m *UserMutation) SetProfilesID(id uuid.UUID) {
+	m.profiles = &id
 }
 
 // ClearProfiles clears the "profiles" edge to the Profiles entity.
@@ -1170,29 +1168,20 @@ func (m *UserMutation) ProfilesCleared() bool {
 	return m.clearedprofiles
 }
 
-// RemoveProfileIDs removes the "profiles" edge to the Profiles entity by IDs.
-func (m *UserMutation) RemoveProfileIDs(ids ...uuid.UUID) {
-	if m.removedprofiles == nil {
-		m.removedprofiles = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.profiles, ids[i])
-		m.removedprofiles[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedProfiles returns the removed IDs of the "profiles" edge to the Profiles entity.
-func (m *UserMutation) RemovedProfilesIDs() (ids []uuid.UUID) {
-	for id := range m.removedprofiles {
-		ids = append(ids, id)
+// ProfilesID returns the "profiles" edge ID in the mutation.
+func (m *UserMutation) ProfilesID() (id uuid.UUID, exists bool) {
+	if m.profiles != nil {
+		return *m.profiles, true
 	}
 	return
 }
 
 // ProfilesIDs returns the "profiles" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProfilesID instead. It exists only for internal usage by the builders.
 func (m *UserMutation) ProfilesIDs() (ids []uuid.UUID) {
-	for id := range m.profiles {
-		ids = append(ids, id)
+	if id := m.profiles; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -1201,7 +1190,6 @@ func (m *UserMutation) ProfilesIDs() (ids []uuid.UUID) {
 func (m *UserMutation) ResetProfiles() {
 	m.profiles = nil
 	m.clearedprofiles = false
-	m.removedprofiles = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -1238,10 +1226,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 7)
-	if m.name != nil {
-		fields = append(fields, user.FieldName)
-	}
+	fields := make([]string, 0, 6)
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
 	}
@@ -1251,8 +1236,8 @@ func (m *UserMutation) Fields() []string {
 	if m.role != nil {
 		fields = append(fields, user.FieldRole)
 	}
-	if m.profileImage != nil {
-		fields = append(fields, user.FieldProfileImage)
+	if m.emailVerified != nil {
+		fields = append(fields, user.FieldEmailVerified)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -1268,16 +1253,14 @@ func (m *UserMutation) Fields() []string {
 // schema.
 func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case user.FieldName:
-		return m.Name()
 	case user.FieldEmail:
 		return m.Email()
 	case user.FieldPassword:
 		return m.Password()
 	case user.FieldRole:
 		return m.Role()
-	case user.FieldProfileImage:
-		return m.ProfileImage()
+	case user.FieldEmailVerified:
+		return m.EmailVerified()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
@@ -1291,16 +1274,14 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case user.FieldName:
-		return m.OldName(ctx)
 	case user.FieldEmail:
 		return m.OldEmail(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
 	case user.FieldRole:
 		return m.OldRole(ctx)
-	case user.FieldProfileImage:
-		return m.OldProfileImage(ctx)
+	case user.FieldEmailVerified:
+		return m.OldEmailVerified(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
@@ -1314,13 +1295,6 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *UserMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case user.FieldName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetName(v)
-		return nil
 	case user.FieldEmail:
 		v, ok := value.(string)
 		if !ok {
@@ -1342,12 +1316,12 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRole(v)
 		return nil
-	case user.FieldProfileImage:
-		v, ok := value.(string)
+	case user.FieldEmailVerified:
+		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetProfileImage(v)
+		m.SetEmailVerified(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1392,11 +1366,7 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(user.FieldProfileImage) {
-		fields = append(fields, user.FieldProfileImage)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1409,11 +1379,6 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
-	switch name {
-	case user.FieldProfileImage:
-		m.ClearProfileImage()
-		return nil
-	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 
@@ -1421,9 +1386,6 @@ func (m *UserMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *UserMutation) ResetField(name string) error {
 	switch name {
-	case user.FieldName:
-		m.ResetName()
-		return nil
 	case user.FieldEmail:
 		m.ResetEmail()
 		return nil
@@ -1433,8 +1395,8 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldRole:
 		m.ResetRole()
 		return nil
-	case user.FieldProfileImage:
-		m.ResetProfileImage()
+	case user.FieldEmailVerified:
+		m.ResetEmailVerified()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -1460,11 +1422,9 @@ func (m *UserMutation) AddedEdges() []string {
 func (m *UserMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case user.EdgeProfiles:
-		ids := make([]ent.Value, 0, len(m.profiles))
-		for id := range m.profiles {
-			ids = append(ids, id)
+		if id := m.profiles; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -1472,23 +1432,12 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removedprofiles != nil {
-		edges = append(edges, user.EdgeProfiles)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case user.EdgeProfiles:
-		ids := make([]ent.Value, 0, len(m.removedprofiles))
-		for id := range m.removedprofiles {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
@@ -1515,6 +1464,9 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
+	case user.EdgeProfiles:
+		m.ClearProfiles()
+		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }

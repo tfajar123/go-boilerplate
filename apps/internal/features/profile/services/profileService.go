@@ -9,6 +9,7 @@ import (
 	storageService "go-boilerplate/apps/internal/features/storage/services"
 	"go-boilerplate/apps/internal/utils"
 	"go-boilerplate/ent"
+	"go-boilerplate/ent/profiles"
 	"go-boilerplate/ent/user"
 
 	"github.com/google/uuid"
@@ -36,6 +37,7 @@ func (s *ProfileService) GetProfile(ctx context.Context, userID string) (*dto.Pr
 	u, err := s.client.User.
 		Query().
 		Where(user.IDEQ(parsedID)).
+		WithProfiles().
 		Only(ctx)
 
 	if err != nil {
@@ -43,15 +45,18 @@ func (s *ProfileService) GetProfile(ctx context.Context, userID string) (*dto.Pr
 	}
 
 	cfg := config.Load()
-	profileImg := utils.BuildStorageURL(cfg, u.ProfileImage)
+	profileImg := ""
+	if u.Edges.Profiles.ImageUrl != "" {
+		profileImg = utils.BuildStorageURL(cfg, u.Edges.Profiles.ImageUrl)
+	}
 
 	return &dto.ProfileResponse{
-		ID:        u.ID,
-		Name:      u.Name,
+		ID:        u.Edges.Profiles.ID,
+		Name:      u.Edges.Profiles.Name,
 		Email:     u.Email,
 		ImageUrl:  profileImg,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		CreatedAt: u.Edges.Profiles.CreatedAt,
+		UpdatedAt: u.Edges.Profiles.UpdatedAt,
 	}, nil
 }
 
@@ -69,9 +74,9 @@ func (s *ProfileService) UpdateImageUrl(
 		return nil, fmt.Errorf("invalid uuid format: %w", err)
 	}
 
-	u, err := s.client.User.
+	profile, err := s.client.Profiles.
 		Query().
-		Where(user.IDEQ(parsedID)).
+		Where(profiles.UserId(parsedID)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
@@ -82,11 +87,11 @@ func (s *ProfileService) UpdateImageUrl(
 		return nil, fmt.Errorf("failed to upload profile image: %w", err)
 	}
 
-	previousImage := u.ProfileImage
+	previousImage := profile.ImageUrl
 
-	updatedUser, err := s.client.User.
-		UpdateOneID(parsedID).
-		SetProfileImage(imagePath).
+	updatedUser, err := s.client.Profiles.
+		UpdateOneID(profile.ID).
+		SetImageUrl(imagePath).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -105,6 +110,6 @@ func (s *ProfileService) UpdateImageUrl(
 	cfg := config.Load()
 
 	return &dto.UpdateProfileImageResponse{
-		ImageUrl: utils.BuildStorageURL(cfg, updatedUser.ProfileImage),
+		ImageUrl: utils.BuildStorageURL(cfg, updatedUser.ImageUrl),
 	}, nil
 }
