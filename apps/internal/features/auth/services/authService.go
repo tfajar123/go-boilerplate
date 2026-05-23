@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"time"
 
-	"go-boilerplate/apps/internal/database"
 	dto "go-boilerplate/apps/internal/features/auth/dto"
 	authValidation "go-boilerplate/apps/internal/features/auth/validation"
 	mailerService "go-boilerplate/apps/internal/features/mailer/services"
@@ -262,13 +261,13 @@ func (s *AuthService) incrLoginFail(
 	ctx context.Context,
 	key string,
 ) {
-	count, err := database.Redis.Incr(ctx, key).Result()
+	count, err := s.redis.Incr(ctx, key).Result()
 	if err != nil {
 		return
 	}
 
 	if count == 1 {
-		database.Redis.Expire(ctx, key, loginTTL)
+		s.redis.Expire(ctx, key, loginTTL)
 	}
 }
 

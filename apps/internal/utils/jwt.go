@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"os"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -10,9 +10,23 @@ import (
 )
 
 var (
-	accessSecret  = []byte(os.Getenv("JWT_ACCESS_SECRET"))
-	refreshSecret = []byte(os.Getenv("JWT_REFRESH_SECRET"))
+	accessSecret  []byte
+	refreshSecret []byte
 )
+
+// InitJWT initializes JWT secrets from config.
+// Must be called after config.Load() to ensure env vars are loaded.
+func InitJWT(accessSec, refreshSec string) {
+	accessSecret = []byte(accessSec)
+	refreshSecret = []byte(refreshSec)
+
+	if len(accessSecret) == 0 {
+		log.Fatal("JWT_ACCESS_SECRET is empty")
+	}
+	if len(refreshSecret) == 0 {
+		log.Fatal("JWT_REFRESH_SECRET is empty")
+	}
+}
 
 // ========================
 // Session

@@ -14,8 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func registerAuthRoutes(api fiber.Router, client *ent.Client, storage *database.Storage) {
-	cfg := config.Load()
+func registerAuthRoutes(api fiber.Router, client *ent.Client, storage *database.Storage, cfg *config.Config) {
 	storageSvc := storageService.NewStorageService(storage)
 	mailSvc := mailerService.NewMailerService(cfg.Mail)
 	authSvc := authService.NewAuthService(client, database.Redis, storageSvc, mailSvc)

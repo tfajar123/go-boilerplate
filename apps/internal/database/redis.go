@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"time"
 
 	"go-boilerplate/apps/internal/config"
 
@@ -15,10 +16,15 @@ var Redis *redis.Client
 
 func InitRedis(cfg config.RedisConfig) {
 	opt := &redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		DB:       cfg.DB,
-		Username: cfg.Username,
-		Password: cfg.Password,
+		Addr:         fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		DB:           cfg.DB,
+		Username:     cfg.Username,
+		Password:     cfg.Password,
+		PoolSize:     20,
+		MinIdleConns: 5,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		DialTimeout:  5 * time.Second,
 	}
 
 	if cfg.TLS {

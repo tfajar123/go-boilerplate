@@ -145,8 +145,14 @@ func (h *AuthHandler) Refresh(c *fiber.Ctx) error {
 ========================= */
 
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
-	sessionID := c.Locals("session_id").(string)
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return utils.Unauthorized(c, "Invalid session", nil)
+	}
+	sessionID, ok := c.Locals("session_id").(string)
+	if !ok || sessionID == "" {
+		return utils.Unauthorized(c, "Invalid session", nil)
+	}
 
 	if err := h.authService.Logout(
 		c.Context(),
