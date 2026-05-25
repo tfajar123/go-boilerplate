@@ -38,12 +38,15 @@ type MailConfig struct {
 }
 
 type Config struct {
-	AppEnv  string
-	DBUrl   string
-	Port    string
-	Redis   RedisConfig
-	Storage StorageConfig
-	Mail    MailConfig
+	AppEnv           string
+	DBUrl            string
+	Port             string
+	JWTAccessSecret  string
+	JWTRefreshSecret string
+	CorsOrigins      string
+	Redis            RedisConfig
+	Storage          StorageConfig
+	Mail             MailConfig
 }
 
 func Load() *Config {
@@ -54,9 +57,12 @@ func Load() *Config {
 	mailPort, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
 
 	cfg := &Config{
-		AppEnv: os.Getenv("APP_ENV"),
-		DBUrl:  os.Getenv("DATABASE_URL"),
-		Port:   os.Getenv("APP_PORT"),
+		AppEnv:           os.Getenv("APP_ENV"),
+		DBUrl:            os.Getenv("DATABASE_URL"),
+		Port:             os.Getenv("APP_PORT"),
+		JWTAccessSecret:  os.Getenv("JWT_ACCESS_SECRET"),
+		JWTRefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
+		CorsOrigins:      os.Getenv("CORS_ORIGINS"),
 
 		Redis: RedisConfig{
 			Host:     os.Getenv("REDIS_HOST"),
@@ -92,8 +98,20 @@ func Load() *Config {
 		log.Fatal("DATABASE_URL is required")
 	}
 
+	if cfg.JWTAccessSecret == "" {
+		log.Fatal("JWT_ACCESS_SECRET is required")
+	}
+
+	if cfg.JWTRefreshSecret == "" {
+		log.Fatal("JWT_REFRESH_SECRET is required")
+	}
+
 	if cfg.Port == "" {
 		cfg.Port = "3000"
+	}
+
+	if cfg.CorsOrigins == "" {
+		cfg.CorsOrigins = "*"
 	}
 
 	if cfg.Storage.Endpoint == "" {

@@ -23,42 +23,19 @@ type LoginResponse struct {
 	User         UserResponse `json:"user"`
 }
 
-// RegisterRequest DTO for registration request
-type RegisterRequest struct {
-	Name     string `json:"name" validate:"required,min=2,max=100"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6,max=50"`
-	Role     string `json:"role,omitempty"`
-	Image    string `json:"image,omitempty"`
-}
-
-// LoginRequest DTO for login request
-type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
-
-// RefreshTokenRequest DTO for refresh token request
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
-}
-
 // RefreshTokenResponse DTO for refresh token response
 type RefreshTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-// LogoutRequest DTO for logout request
-type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
-}
-
+// ForgotPasswordResponse DTO for forgot password response
 type ForgotPasswordResponse struct {
 	EmailSent bool      `json:"email_sent"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+// ResetPasswordResponse DTO for reset password response
 type ResetPasswordResponse struct {
 	ResetAt time.Time `json:"reset_at"`
 }

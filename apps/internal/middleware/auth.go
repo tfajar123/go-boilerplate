@@ -27,20 +27,30 @@ func AuthRequired(redis *redis.Client) fiber.Handler {
 			return utils.Unauthorized(c, "Token tidak valid", err.Error())
 		}
 
-		userID := claims["sub"].(string)
-		sessionID := claims["sid"].(string)
+		userID, ok := claims["sub"].(string)
+		if !ok || userID == "" {
+			return utils.Unauthorized(c, "Token tidak valid", nil)
+		}
+		sessionID, ok := claims["sid"].(string)
+		if !ok || sessionID == "" {
+			return utils.Unauthorized(c, "Token tidak valid", nil)
+		}
+		email, _ := claims["email"].(string)
 
 		// ============================
 		// CEK SESSION KE REDIS (WAJIB)
 		// ============================
 		key := "auth:session:" + userID
 		storedSID, err := redis.Get(c.Context(), key).Result()
-		if err != nil || storedSID != sessionID {
-			return utils.Unauthorized(c, "session sudah logout", err.Error())
+		if err != nil {
+			return utils.Unauthorized(c, "session expired", nil)
+		}
+		if storedSID != sessionID {
+			return utils.Unauthorized(c, "session tidak valid", nil)
 		}
 
 		c.Locals("user_id", userID)
-		c.Locals("email", claims["email"].(string))
+		c.Locals("email", email)
 		c.Locals("session_id", sessionID)
 
 		return c.Next()

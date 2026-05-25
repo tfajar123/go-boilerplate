@@ -14,6 +14,9 @@ func RequestLogger() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 
+		// Copy request body for logging
+		// In development: always captured
+		// In production: captured only for error responses (status >= 400)
 		var requestBody []byte
 		if c.Method() == "POST" || c.Method() == "PUT" || c.Method() == "PATCH" {
 			body := c.Request().Body()
@@ -28,17 +31,22 @@ func RequestLogger() fiber.Handler {
 		err := c.Next()
 
 		latency := time.Since(start)
+		statusCode := c.Response().StatusCode()
 
 		logFields := []zap.Field{
 			zap.String("method", c.Method()),
 			zap.String("path", c.Path()),
-			zap.Int("status", c.Response().StatusCode()),
+			zap.Int("status", statusCode),
 			zap.Duration("latency", latency),
 			zap.String("ip", c.IP()),
 		}
 
-		// Tambahkan detail request jika di development
-		if utils.IsDevelopment() {
+		isDev := utils.IsDevelopment()
+		isError := statusCode >= 400
+
+		// In development: log full request details
+		// In production/staging: only log request body when error occurs
+		if isDev || isError {
 			if len(requestBody) > 0 {
 				var parsedBody any
 				if err := json.Unmarshal(requestBody, &parsedBody); err == nil {
@@ -47,7 +55,10 @@ func RequestLogger() fiber.Handler {
 					logFields = append(logFields, zap.String("request_body", string(requestBody)))
 				}
 			}
+		}
 
+		// Query params and headers: only in development
+		if isDev {
 			queryParams := c.Request().URI().QueryArgs()
 			if queryParams.Len() > 0 {
 				queryMap := make(map[string]string)
@@ -70,7 +81,12 @@ func RequestLogger() fiber.Handler {
 			}
 		}
 
-		utils.Logger.Info("http request", logFields...)
+		// Use appropriate log level based on status code
+		if isError {
+			utils.Logger.Warn("http request", logFields...)
+		} else {
+			utils.Logger.Info("http request", logFields...)
+		}
 
 		return err
 	}
