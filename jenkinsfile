@@ -33,19 +33,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 2: Generate Ent Client
-        // ─────────────────────────────────────
-        stage('Generate') {
-            steps {
-                sh '''
-                    echo ">> Generating Ent client..."
-                    go generate ./ent
-                '''
-            }
-        }
-
-        // ─────────────────────────────────────
-        // Stage 3: Lint & Vet
+        // Stage 2: Lint & Vet
         // ─────────────────────────────────────
         stage('Lint') {
             steps {
@@ -60,7 +48,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 4: Unit Tests
+        // Stage 3: Unit Tests
         // ─────────────────────────────────────
         stage('Test') {
             steps {
@@ -78,7 +66,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 5: Build Go Binary (validation)
+        // Stage 4: Build Go Binary (validation)
         // ─────────────────────────────────────
         stage('Build Binary') {
             steps {
@@ -91,7 +79,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 6: Build Docker Image
+        // Stage 5: Build Docker Image
         // ─────────────────────────────────────
         stage('Build Docker Image') {
             when {
@@ -110,7 +98,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 7: Push Docker Image
+        // Stage 6: Push Docker Image
         // ─────────────────────────────────────
         stage('Push Docker Image') {
             when {
@@ -130,7 +118,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 8: Deploy to Staging
+        // Stage 7: Deploy to Staging
         // ─────────────────────────────────────
         stage('Deploy Staging') {
             when {
@@ -168,7 +156,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────
-        // Stage 9: Deploy to Production
+        // Stage 8: Deploy to Production
         // ─────────────────────────────────────
         stage('Deploy Production') {
             when {

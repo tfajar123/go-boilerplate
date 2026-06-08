@@ -39,9 +39,8 @@ ENV TZ=Asia/Jakarta
 
 WORKDIR /app
 
-# Copy the binary, migrations and necessary files
+# Copy the binary and necessary files
 COPY --from=builder /app/app .
-COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/.env.example .
 
 # Create non-root user for security
