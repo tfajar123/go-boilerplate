@@ -5,13 +5,13 @@ import (
 	"go-boilerplate/apps/internal/database"
 	middlewares "go-boilerplate/apps/internal/middleware"
 	"go-boilerplate/apps/internal/utils"
-	"go-boilerplate/ent"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func Register(app *fiber.App, client *ent.Client, storage *database.Storage, cfg *config.Config) {
+func Register(app *fiber.App, db *mongo.Database, storage *database.Storage, cfg *config.Config) {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return utils.Ok(c, "Service is running", nil)
@@ -21,7 +21,7 @@ func Register(app *fiber.App, client *ent.Client, storage *database.Storage, cfg
 		checks := fiber.Map{}
 
 		// check database
-		if err := database.DB.PingContext(c.Context()); err != nil {
+		if err := database.MongoClient.Ping(c.Context(), nil); err != nil {
 			checks["db"] = "error: " + err.Error()
 		} else {
 			checks["db"] = "ok"
@@ -40,7 +40,7 @@ func Register(app *fiber.App, client *ent.Client, storage *database.Storage, cfg
 	api := app.Group("/api/v1")
 	api.Use(middlewares.RateLimiter(100, time.Minute))
 
-	registerAuthRoutes(api, client, storage, cfg)
-	registerProfileRoutes(api, client, storage)
+	registerAuthRoutes(api, db, storage, cfg)
+	registerProfileRoutes(api, db, storage)
 
 }

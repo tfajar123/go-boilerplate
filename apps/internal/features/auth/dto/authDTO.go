@@ -2,13 +2,11 @@ package authDTO
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // UserResponse DTO for returning user data without sensitive fields
 type UserResponse struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`

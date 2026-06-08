@@ -1,14 +1,11 @@
 package utils
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
 
-	"go-boilerplate/ent"
-
-	"github.com/lib/pq"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // Database Error Types
@@ -17,10 +14,8 @@ var (
 	ErrDatabaseQuery       = errors.New("database query error")
 	ErrNotFound            = errors.New("record not found")
 	ErrDuplicateEntry      = errors.New("duplicate entry")
-	ErrForeignKeyViolation = errors.New("foreign key violation")
 	ErrConstraintViolation = errors.New("constraint violation")
 	ErrInvalidInput        = errors.New("invalid input data")
-	ErrTransactionFailed   = errors.New("transaction failed")
 	ErrTimeout             = errors.New("database operation timeout")
 )
 
@@ -73,93 +68,63 @@ func WrapDatabaseError(err error) *AppError {
 		return nil
 	}
 
-	// Ent ORM Errors
-	if ent.IsNotFound(err) {
+	// MongoDB: document not found
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return NewAppError(err, "Record not found", http.StatusNotFound, CategoryNotFound)
 	}
 
-	if ent.IsConstraintError(err) {
-		return parseConstraintError(err)
+	// MongoDB: write errors (duplicate key, etc.)
+	var writeErr mongo.WriteException
+	if errors.As(err, &writeErr) {
+		return parseMongoWriteError(writeErr)
 	}
 
-	if ent.IsValidationError(err) {
-		return NewAppError(err, "Invalid data", http.StatusBadRequest, CategoryValidation)
-	}
-
-	// PostgreSQL Errors
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return parsePostgresError(pqErr)
-	}
-
-	// Standard SQL Errors
-	if errors.Is(err, sql.ErrNoRows) {
-		return NewAppError(err, "Record not found", http.StatusNotFound, CategoryNotFound)
-	}
-
-	if errors.Is(err, sql.ErrConnDone) {
-		return NewAppError(err, "Database connection lost", http.StatusServiceUnavailable, CategoryDatabase)
-	}
-
-	if errors.Is(err, sql.ErrTxDone) {
-		return NewAppError(err, "Transaction already completed", http.StatusInternalServerError, CategoryDatabase)
+	// MongoDB: command errors
+	var cmdErr mongo.CommandError
+	if errors.As(err, &cmdErr) {
+		return parseMongoCommandError(cmdErr)
 	}
 
 	// Default database error
 	return NewAppError(err, "Database operation failed", http.StatusInternalServerError, CategoryDatabase)
 }
 
-// parsePostgresError handles specific PostgreSQL error codes
-func parsePostgresError(err *pq.Error) *AppError {
-	switch err.Code {
-	// Unique violation
-	case "23505":
-		return NewAppError(err, "Duplicate entry", http.StatusConflict, CategoryValidation)
+// parseMongoWriteError handles MongoDB write errors
+func parseMongoWriteError(err mongo.WriteException) *AppError {
+	for _, we := range err.WriteErrors {
+		switch we.Code {
+		// Duplicate key error
+		case 11000:
+			return NewAppError(err, "Duplicate entry", http.StatusConflict, CategoryValidation)
+		// Document validation failure
+		case 121:
+			return NewAppError(err, "Data validation failed", http.StatusBadRequest, CategoryValidation)
+		}
+	}
 
-	// Foreign key violation
-	case "23503":
-		return NewAppError(err, "Invalid reference data", http.StatusBadRequest, CategoryValidation)
+	return NewAppError(err, "Database write error", http.StatusInternalServerError, CategoryDatabase)
+}
 
-	// Not null violation
-	case "23502":
-		return NewAppError(err, "Field cannot be empty", http.StatusBadRequest, CategoryValidation)
-
-	// Check violation
-	case "23514":
-		return NewAppError(err, "Data validation failed", http.StatusBadRequest, CategoryValidation)
-
-	// Invalid text representation
-	case "22P02":
-		return NewAppError(err, "Invalid data format", http.StatusBadRequest, CategoryValidation)
-
-	// Connection errors
-	case "08006", "08001", "08004", "57P01":
-		return NewAppError(err, "Database connection failed", http.StatusServiceUnavailable, CategoryDatabase)
-
-	// Timeout
-	case "57014":
-		return NewAppError(err, "Operation timed out", http.StatusGatewayTimeout, CategoryTimeout)
-
-	// Permission denied
-	case "42501":
+// parseMongoCommandError handles MongoDB command errors
+func parseMongoCommandError(err mongo.CommandError) *AppError {
+	switch {
+	case err.HasErrorCode(13): // Unauthorized
 		return NewAppError(err, "Database access denied", http.StatusForbidden, CategoryPermission)
-
+	case err.HasErrorCode(50): // MaxTimeMSExpired
+		return NewAppError(err, "Operation timed out", http.StatusGatewayTimeout, CategoryTimeout)
 	default:
-		// Return generic database error
 		return NewAppError(err, "Internal database error", http.StatusInternalServerError, CategoryDatabase)
 	}
 }
 
-// parseConstraintError parses Ent constraint error
+// parseConstraintError parses constraint-like errors from error messages
 func parseConstraintError(err error) *AppError {
 	errMsg := err.Error()
 
 	switch {
-	case strings.Contains(errMsg, "unique"):
+	case strings.Contains(errMsg, "duplicate"):
 		return NewAppError(err, "Record already exists", http.StatusConflict, CategoryValidation)
-	case strings.Contains(errMsg, "foreign key"):
-		return NewAppError(err, "Invalid data reference", http.StatusBadRequest, CategoryValidation)
-	case strings.Contains(errMsg, "check constraint"):
+	case strings.Contains(errMsg, "validation"):
 		return NewAppError(err, "Data validation failed", http.StatusBadRequest, CategoryValidation)
 	default:
 		return NewAppError(err, "Data constraint violation", http.StatusBadRequest, CategoryValidation)
@@ -173,13 +138,12 @@ func IsDatabaseError(err error) bool {
 		return appErr.Category == CategoryDatabase
 	}
 
-	// Check for database error types
-	_, isPQErr := err.(*pq.Error)
-	return isPQErr ||
-		ent.IsConstraintError(err) ||
-		errors.Is(err, sql.ErrConnDone) ||
-		errors.Is(err, sql.ErrNoRows) ||
-		errors.Is(err, sql.ErrTxDone)
+	// Check for MongoDB error types
+	var writeErr mongo.WriteException
+	var cmdErr mongo.CommandError
+	return errors.Is(err, mongo.ErrNoDocuments) ||
+		errors.As(err, &writeErr) ||
+		errors.As(err, &cmdErr)
 }
 
 // GetStatusCode returns proper HTTP status code for error

@@ -14,28 +14,28 @@ import (
 	mailerService "go-boilerplate/apps/internal/features/mailer/services"
 	storageService "go-boilerplate/apps/internal/features/storage/services"
 	"go-boilerplate/apps/internal/utils"
-	"go-boilerplate/ent"
-	"go-boilerplate/ent/user"
+	"go-boilerplate/models"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type AuthService struct {
-	client  *ent.Client
+	db      *mongo.Database
 	redis   *redis.Client
 	storage *storageService.StorageService
 	mailer  *mailerService.MailerService
 }
 
 func NewAuthService(
-	client *ent.Client,
+	db *mongo.Database,
 	redis *redis.Client,
 	storage *storageService.StorageService,
 	mailer *mailerService.MailerService,
 ) *AuthService {
 	return &AuthService{
-		client:  client,
+		db:      db,
 		redis:   redis,
 		storage: storage,
 		mailer:  mailer,
@@ -65,14 +65,16 @@ func (s *AuthService) Login(
 		return nil, errors.New("Too many requests, please try again later")
 	}
 
-	u, err := s.client.User.
-		Query().
-		Where(user.EmailEQ(req.Email)).
-		WithProfiles().
-		Only(ctx)
+	var u models.User
+	err := s.db.Collection(models.CollectionUsers).
+		FindOne(ctx, bson.M{"email": req.Email}).
+		Decode(&u)
 
 	if err != nil {
 		s.incrLoginFail(ctx, failKey)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("Email or Password is incorrect")
+		}
 		return nil, errors.New("Email or Password is incorrect")
 	}
 
@@ -85,20 +87,19 @@ func (s *AuthService) Login(
 
 	sid := utils.NewSessionID()
 
-	err = s.SaveSession(ctx, u.ID.String(), sid, 7*24*time.Hour)
+	err = s.SaveSession(ctx, u.ID.Hex(), sid, 7*24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
-	u.Password = ""
 
-	accessToken, _ := utils.GenerateAccessToken(u.ID.String(), u.Email, sid)
-	refreshToken, _ := utils.GenerateRefreshToken(u.ID.String(), u.Email, sid)
+	accessToken, _ := utils.GenerateAccessToken(u.ID.Hex(), u.Email, sid)
+	refreshToken, _ := utils.GenerateRefreshToken(u.ID.Hex(), u.Email, sid)
 
 	userResponse := dto.UserResponse{
-		ID:        u.ID,
-		Name:      u.Edges.Profiles.Name,
+		ID:        u.ID.Hex(),
+		Name:      u.Profile.Name,
 		Email:     u.Email,
-		Role:      u.Role.String(),
+		Role:      u.Role,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	}
@@ -121,16 +122,13 @@ func (s *AuthService) Register(
 		return fmt.Errorf("validation: %w", err)
 	}
 
-	exists, err := s.client.User.
-		Query().
-		Where(user.EmailEQ(req.Email)).
-		Exist(ctx)
-
+	count, err := s.db.Collection(models.CollectionUsers).
+		CountDocuments(ctx, bson.M{"email": req.Email})
 	if err != nil {
 		return err
 	}
 
-	if exists {
+	if count > 0 {
 		return errors.New("Email already exists")
 	}
 
@@ -203,57 +201,44 @@ func (s *AuthService) VerifyRegisterOTP(
 		return nil, err
 	}
 
-	// Create user and profile in database within transaction
-	tx, err := s.client.Tx(ctx)
+	// Create user document with embedded profile
+	now := time.Now()
+	user := models.User{
+		Email:         data["email"],
+		Password:      data["password"],
+		Role:          data["role"],
+		EmailVerified: true,
+		Profile: models.Profile{
+			Name: data["name"],
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	result, err := s.db.Collection(models.CollectionUsers).InsertOne(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := tx.User.
-		Create().
-		SetEmail(data["email"]).
-		SetPassword(data["password"]).
-		SetRole(user.Role(data["role"])).
-		SetEmailVerified(true).
-		Save(ctx)
-
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	_, err = tx.Profiles.
-		Create().
-		SetName(data["name"]).
-		SetUser(u).
-		Save(ctx)
-
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
+	insertedID := result.InsertedID.(bson.ObjectID)
 
 	// Delete OTP
 	_ = s.redis.Del(ctx, otpKey).Err()
 
 	// Auto login after successful verification
 	sid := utils.NewSessionID()
-	err = s.SaveSession(ctx, u.ID.String(), sid, 7*24*time.Hour)
+	err = s.SaveSession(ctx, insertedID.Hex(), sid, 7*24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.UserResponse{
-		ID:        u.ID,
+		ID:        insertedID.Hex(),
 		Name:      data["name"],
-		Email:     u.Email,
-		Role:      u.Role.String(),
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		Email:     user.Email,
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}, nil
 }
 
@@ -340,19 +325,18 @@ func (s *AuthService) ForgotPassword(
 		return nil, err
 	}
 
-	u, err := s.client.User.
-		Query().
-		Where(user.EmailEQ(req.Email)).
-		WithProfiles().
-		Only(ctx)
+	var u models.User
+	err := s.db.Collection(models.CollectionUsers).
+		FindOne(ctx, bson.M{"email": req.Email}).
+		Decode(&u)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, errors.New("Email not found")
 		}
 		return nil, err
 	}
 
-	resetToken := uuid.NewString()
+	resetToken := bson.NewObjectID().Hex()
 	expiresAt := time.Now().Add(forgotPasswordTTL)
 
 	tokenKey := "auth:forgot_password:token:" + resetToken
@@ -365,7 +349,7 @@ func (s *AuthService) ForgotPassword(
 		return nil, err
 	}
 
-	if err := s.redis.Set(ctx, tokenKey, u.ID.String(), forgotPasswordTTL).Err(); err != nil {
+	if err := s.redis.Set(ctx, tokenKey, u.ID.Hex(), forgotPasswordTTL).Err(); err != nil {
 		return nil, err
 	}
 
@@ -379,7 +363,7 @@ func (s *AuthService) ForgotPassword(
 	}
 
 	resetLink := fmt.Sprintf("%s?token=%s", s.mailerResetPasswordURL(), url.QueryEscape(resetToken))
-	if err := s.mailer.SendResetPasswordEmail(u.Email, u.Edges.Profiles.Name, resetLink, expiresAt); err != nil {
+	if err := s.mailer.SendResetPasswordEmail(u.Email, u.Profile.Name, resetLink, expiresAt); err != nil {
 		_ = s.redis.Del(ctx, tokenKey, emailKey).Err()
 		return nil, fmt.Errorf("failed to send reset password email: %w", err)
 	}
@@ -408,17 +392,17 @@ func (s *AuthService) ResetPassword(
 		return nil, err
 	}
 
-	parsedID, err := uuid.Parse(userID)
+	parsedID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id in reset token: %w", err)
 	}
 
-	u, err := s.client.User.
-		Query().
-		Where(user.IDEQ(parsedID)).
-		Only(ctx)
+	var u models.User
+	err = s.db.Collection(models.CollectionUsers).
+		FindOne(ctx, bson.M{"_id": parsedID}).
+		Decode(&u)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, errors.New("User not found")
 		}
 		return nil, err
@@ -429,15 +413,19 @@ func (s *AuthService) ResetPassword(
 		return nil, err
 	}
 
-	if err := s.client.User.
-		UpdateOneID(u.ID).
-		SetPassword(hashedPassword).
-		Exec(ctx); err != nil {
+	_, err = s.db.Collection(models.CollectionUsers).
+		UpdateByID(ctx, u.ID, bson.M{
+			"$set": bson.M{
+				"password":   hashedPassword,
+				"updated_at": time.Now(),
+			},
+		})
+	if err != nil {
 		return nil, err
 	}
 
 	emailKey := "auth:forgot_password:email:" + u.Email
-	sessionKey := "auth:session:" + u.ID.String()
+	sessionKey := "auth:session:" + u.ID.Hex()
 
 	if err := s.redis.Del(ctx, tokenKey, emailKey, sessionKey).Err(); err != nil {
 		return nil, err

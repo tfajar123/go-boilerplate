@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,14 +32,22 @@ func main() {
 	// init JWT secrets from config
 	utils.InitJWT(cfg.JWTAccessSecret, cfg.JWTRefreshSecret)
 
-	// bootstrap database (skip in production)
-	if cfg.AppEnv != "production" {
-		database.EnsureDatabaseExists(cfg.DBUrl)
-	}
+	// init mongodb
+	mongoClient, db := database.NewMongoClient(cfg.MongoURI, cfg.MongoDBName)
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mongoClient.Disconnect(ctx); err != nil {
+			utils.Logger.Error("failed to disconnect mongodb", zap.Error(err))
+		}
+	}()
 
-	// init ent
-	entClient := database.NewEntClient(cfg.DBUrl)
-	defer entClient.Close()
+	utils.Logger.Info("mongodb connected",
+		zap.String("database", cfg.MongoDBName),
+	)
+
+	// bootstrap database (ensure indexes)
+	database.Bootstrap(db)
 
 	database.InitRedis(cfg.Redis)
 
@@ -77,7 +86,7 @@ func main() {
 	app.Use(middlewares.RequestLogger())
 
 	// inject dependencies
-	route.Register(app, entClient, storage, cfg)
+	route.Register(app, db, storage, cfg)
 
 	// graceful shutdown
 	quit := make(chan os.Signal, 1)

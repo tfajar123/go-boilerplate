@@ -2,12 +2,10 @@ package dto
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type ProfileResponse struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	ImageUrl  string    `json:"image_url"`

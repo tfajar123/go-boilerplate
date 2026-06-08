@@ -8,16 +8,16 @@ import (
 	mailerService "go-boilerplate/apps/internal/features/mailer/services"
 	storageService "go-boilerplate/apps/internal/features/storage/services"
 	middlewares "go-boilerplate/apps/internal/middleware"
-	"go-boilerplate/ent"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func registerAuthRoutes(api fiber.Router, client *ent.Client, storage *database.Storage, cfg *config.Config) {
+func registerAuthRoutes(api fiber.Router, db *mongo.Database, storage *database.Storage, cfg *config.Config) {
 	storageSvc := storageService.NewStorageService(storage)
 	mailSvc := mailerService.NewMailerService(cfg.Mail)
-	authSvc := authService.NewAuthService(client, database.Redis, storageSvc, mailSvc)
+	authSvc := authService.NewAuthService(db, database.Redis, storageSvc, mailSvc)
 	authHndlr := authHandler.NewAuthHandler(authSvc)
 	redisClient := database.Redis
 

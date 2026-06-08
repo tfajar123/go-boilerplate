@@ -3,11 +3,7 @@
 # =========================
 SHELL := /bin/bash
 ENV_FILE := .env
-ENT_DIR := ent
 MIGRATIONS_DIR := migrations
-
-# default env
-ATLAS_ENV ?= local
 
 # =========================
 # HELP
@@ -16,14 +12,8 @@ ATLAS_ENV ?= local
 help:
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make gen               Generate ent client"
-	@echo "  make migrate-hash      Generate atlas.sum (once)"
-	@echo "  make migrate-diff name=init"
-	@echo "  make migrate-apply     Apply migrations"
 	@echo "  make setup             First time project setup"
-	@echo "  make migrate-local"
-	@echo "  make migrate-staging"
-	@echo "  make migrate-prod"
+	@echo "  make dev               Start development server"
 	@echo ""
 
 # =========================
@@ -38,43 +28,12 @@ define LOAD_ENV
 endef
 
 # =========================
-# ENT
+# DEVELOPMENT
 # =========================
-.PHONY: gen
-gen:
-	@echo ">> Generating Ent client..."
-	@$(LOAD_ENV) go generate ./$(ENT_DIR)
-
-# =========================
-# ATLAS
-# =========================
-.PHONY: migrate-hash
-migrate-hash:
-	@echo ">> Hashing migration directory..."
-	@$(LOAD_ENV) atlas migrate hash
-
-.PHONY: migrate-diff
-migrate-diff:
-	@echo ">> Creating migration diff: $(name)"
-	@$(LOAD_ENV) atlas migrate diff $(name) --env $(ATLAS_ENV)
-
-.PHONY: migrate-apply
-migrate-apply:
-	@echo ">> Applying migrations (env=$(ATLAS_ENV))"
-	@$(LOAD_ENV) atlas migrate apply --env $(ATLAS_ENV)
-
-# =========================
-# SHORTCUTS
-# =========================
-.PHONY: migrate-local migrate-staging migrate-prod
-migrate-local:
-	@$(MAKE) migrate-apply ATLAS_ENV=local
-
-migrate-staging:
-	@$(MAKE) migrate-apply ATLAS_ENV=staging
-
-migrate-prod:
-	@$(MAKE) migrate-apply ATLAS_ENV=production
+.PHONY: dev
+dev:
+	@echo ">> Starting development server..."
+	@$(LOAD_ENV) air
 
 # =========================
 # FIRST TIME SETUP
@@ -82,6 +41,6 @@ migrate-prod:
 .PHONY: setup
 setup:
 	@echo ">> First time setup"
-	@$(MAKE) gen
-	@$(MAKE) migrate-hash
-	@$(MAKE) migrate-apply
+	@echo ">> Installing dependencies..."
+	@go mod tidy
+	@echo ">> Setup complete! Run 'make dev' to start the server."

@@ -39,7 +39,8 @@ type MailConfig struct {
 
 type Config struct {
 	AppEnv           string
-	DBUrl            string
+	MongoURI         string
+	MongoDBName      string
 	Port             string
 	JWTAccessSecret  string
 	JWTRefreshSecret string
@@ -58,7 +59,8 @@ func Load() *Config {
 
 	cfg := &Config{
 		AppEnv:           os.Getenv("APP_ENV"),
-		DBUrl:            os.Getenv("DATABASE_URL"),
+		MongoURI:         os.Getenv("MONGO_URI"),
+		MongoDBName:      os.Getenv("MONGO_DB_NAME"),
 		Port:             os.Getenv("APP_PORT"),
 		JWTAccessSecret:  os.Getenv("JWT_ACCESS_SECRET"),
 		JWTRefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
@@ -94,8 +96,12 @@ func Load() *Config {
 		},
 	}
 
-	if cfg.DBUrl == "" {
-		log.Fatal("DATABASE_URL is required")
+	if cfg.MongoURI == "" {
+		log.Fatal("MONGO_URI is required")
+	}
+
+	if cfg.MongoDBName == "" {
+		log.Fatal("MONGO_DB_NAME is required")
 	}
 
 	if cfg.JWTAccessSecret == "" {

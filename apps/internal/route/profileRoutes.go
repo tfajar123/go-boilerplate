@@ -6,14 +6,14 @@ import (
 	"go-boilerplate/apps/internal/features/profile/services"
 	storageService "go-boilerplate/apps/internal/features/storage/services"
 	middlewares "go-boilerplate/apps/internal/middleware"
-	"go-boilerplate/ent"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func registerProfileRoutes(api fiber.Router, client *ent.Client, storage *database.Storage) {
+func registerProfileRoutes(api fiber.Router, db *mongo.Database, storage *database.Storage) {
 	storageSvc := storageService.NewStorageService(storage)
-	profileSvc := services.NewProfileService(client, storageSvc)
+	profileSvc := services.NewProfileService(db, storageSvc)
 	profileHndlr := handlers.NewProfileHandler(profileSvc)
 	redisClient := database.Redis
 
